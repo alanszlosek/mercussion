@@ -1,0 +1,48 @@
+
+title: "Hey there"
+author: "Somebody"
+timesignature: 4/4
+tempo: 140
+
+snare:
+	(4/4)
+	P.lhlh .lhlh r-hh. lhhh | Mh-h-h xh-h hxh x | Phhhhhh h-h-h Mhxh rxrxrx | . . . l-hh-h
+	HhHhHh H PHhhhhh Mhh-h | hh-h xx . h-h-h | xh-h hhx -h-h-h-h xh | HH-h hxx hHh HhH
+
+
+bass:
+	P{ab}.cc {de}.cc
+
+
+----
+
+P.lhlh .lhlh r-hh. lhhh | Mh-h-h xh-h hxh x | Phhhhhh h-h-h Mhxh rxrxrx | . . . l-hh-h
+HhHhHh H PHhhhhh Mhh-h | hh-h xx . h-h-h | xh-h hhx -h-h-h-h xh | HH-h hxx hHh HhH
+
+-a-bc,cb cdd
+
+
+music = [
+	// measure
+	{
+		timeSignature: '4/4',
+		beats: [
+			# beat 1
+			[
+				# note 1
+				{
+					'accent': False,
+					'diddle': False,
+					'flam': False,
+					'fours': False,
+					'highAccent': False,
+					'notes': [],
+					'rest': False,
+					'simultaneous': False,
+					'sticking': False,
+					'surface': False
+				}
+			]
+		]
+	}
+]

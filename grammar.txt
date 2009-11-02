@@ -1,0 +1,37 @@
+score: details instruments | instruments
+
+details: detail string details
+
+detail: "author:" | "tempo:" | "timesignature:" | "title:"
+
+instruments: instrument space* music space* instruments | instrument space* music space*
+
+instrument: "snare:" | "bass:" | "tenor:" | "cymbal:"
+
+music: measure space* "|" space* music | measure
+
+measure: beat space* measure | beat
+
+// incomplete
+firstBeat: timeSignature space* beat
+
+beat: "(" simultaneousNotes ")" | note beat | note
+
+simultaneousNotes: note simultaneousNotes | note
+
+note: modifers noteSurface | noteSurface
+
+modifiers: modifier modifiers | modifier
+
+modifier: [PMF] | [rl] | [,-=] | // surface(rim)
+
+noteSurface: [hHxX] | [aAbBcCdDeE] | '.'
+// numbers for drums instead of letters? so we can support 6 basses and F for Forte
+// but letter allow for accents embedded into drum specification
+// but we DO need accents on rims
+
+tuplet_begin: "["
+
+tuplet_end: "]"
+
+string: [a-zA-Z0-9_-]+ | '"' .* '"'
