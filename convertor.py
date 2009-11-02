@@ -64,21 +64,68 @@ class Convertor:
 	def toLilypond(self, parsed):
 		a = self.condense(parsed)
 		ret = ''
+		mapping = {
+			'h': 'c\'\'',
+			'x': 'c\'\'', # rim shot
+
+			'a': 'e\'\'',
+			'b': 'c\'\'',
+			'c': 'a\'',
+			'd': 'f\'',
+			'e': 'd\'',
+			'f': 'b',
+	
+			'r': 'r', # rest
+			'u': 'b\'', # unison b'
+	
+			# dynamics
+			'P': '\\p',
+			'M': '\\mf',
+			'F': '\\f',
+			'G': '\\ff',
+	
+			'<': '\\<',
+			'>': '\\>',
+			':': '\\!'
+		}
 
 		# duplicate flam placeholders
 
-		instruments = a['instruments']
-		snare = instruments['snare']
-		for measure in snare:
-			beats = len(measure['beats'])
-			for beat in measure['beats']:
-				if tuple:
-					i = 0
-				for note in beat:
-					if note is list:
+		for pair in a['instruments'].items():
+			for measure in pair[1]:
+				beats = len(measure['beats'])
+				# output measure's time signature
+				for beat in measure['beats']:
+					if tuple:
 						i = 0
-					else:
+					for note in beat:
+						if note is list:
+							i = 0
+							ret += 'simul '
+						else:
+							# new dynamic:
+							if 'dynamic' in note:
+								ret += mapping[ note['dynamic'] ] + ' '
+
+							# note or rest?
+							if 'rest' in note:
+								ret += 'r' + str(note['duration'])
+							else:
+								ret += mapping[ note['surface'] ] + str(note['duration'])
+
+							# diddle?
+							if 'diddle' in note:
+								ret += ':' + str(note['duration']*2)
+
+							# fours?
+							if 'fours' in note:
+								ret += ':' + str(note['duration']*4)
+
+							# should note be accented?
+							if 'accent' in note:
+								ret += ' \\accent'
+						ret += ' '
+					if tuple:
 						i = 0
-				if tuple:
-					i = 0
-		return a
+				ret += ' | '
+		return ret

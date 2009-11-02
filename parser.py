@@ -344,7 +344,7 @@ lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 #tokens = lex.scan("title:\"Listen here Fucker\" author: \"Alan Szlosek\" snare:\n\tPH-hhh x.hh ,hh,hh | lhlh =h=h\nbass:\n\tPaa bb cc|aabb")
 
 #tokens = lex.scan("snare:(ab).cd aab bbc | . . . | a b c")
-tokens = lex.scan("snare:,h.hh hhhh hhh.hh")
+tokens = lex.scan("snare:P,H.hh -hHhh Mhhh.hh")
 
 #tokens = lex.scan("b.cd")
 
