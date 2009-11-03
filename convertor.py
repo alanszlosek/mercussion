@@ -89,7 +89,7 @@ class Convertor:
 			':': '\\!'
 		}
 
-		# duplicate flam placeholders
+		# annotate with flamRest placeholders
 
 		for pair in a['instruments'].items():
 			for measure in pair[1]:
@@ -106,6 +106,11 @@ class Convertor:
 							# new dynamic:
 							if 'dynamic' in note:
 								ret += mapping[ note['dynamic'] ] + ' '
+
+							if 'flam' in note:
+								 i = 0
+							elif 'flamRest' in note:
+								i = 0
 
 							# note or rest?
 							if 'rest' in note:
