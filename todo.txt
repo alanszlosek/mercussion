@@ -1,0 +1,17 @@
+- when compiling for midi output
+	- add tap-off measure
+	- expand tremolos
+
+- crescendos and decrescendos
+        - starting and stopping points attached to notes
+
+- parse unisons into simultaneous notes?
+        - only when compiling for midi output?
+
+- plan cymbal notation
+
+Questions:
+
+- deduce whether a note should be dotted automatically as a compiler optimization?
+- how should i handle flams on tenors? new character?
+

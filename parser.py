@@ -353,6 +353,10 @@ a = parser.score()
 #print( repr(a) )
 
 convertor = Convertor()
-b = convertor.toLilypond(a)
+settings = {
+	'expantTremolos': False,
+	'tapOff': False
+}
+b = convertor.toLilypond(a, settings)
 
 print( repr(b) )

@@ -61,7 +61,7 @@ class Convertor:
 
 		return parsed
 
-	def toLilypond(self, parsed):
+	def toLilypond(self, parsed, settings={}):
 		a = self.condense(parsed)
 		ret = ''
 		mapping = {
