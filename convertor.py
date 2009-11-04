@@ -126,7 +126,6 @@ class Convertor:
 								ret += mapping[ note['dynamic'] ] + ' '
 
 							if 'flam' in note:
-								 i = 0
 								if instrument == 'snare':
 									i = 0
 								else:
