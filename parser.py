@@ -343,14 +343,14 @@ rules = [
 lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 
 #tokens = lex.scan("title:\"Listen here Fucker\" author: \"Alan Szlosek\" snare:\n\tPH-hhh x.hh ,hh,hh | lhlh =h=h\nbass:\n\tPaa bb cc|aabb")
-#tokens = lex.scan("snare:(ab).cd aab bbc | . . . | a b c")
+tokens = lex.scan("snare:(ab).cd aab bbc | . . . | a b c")
 #tokens = lex.scan("snare:P,H.hh -hHhh Mhhh.hh")
 #tokens = lex.scan("b.cd")
-tokens = lex.scan("tenor: ,bCba,aD abC.")
+#tokens = lex.scan("snare: hhhh hhh. tenor: ,bCba,aD abC.")
 
 parser = Parser(tokens)
 a = parser.score()
-#print( repr(a) )
+print( repr(a) )
 
 convertor = Convertor()
 settings = {

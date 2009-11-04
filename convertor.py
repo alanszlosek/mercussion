@@ -23,7 +23,6 @@ class Convertor:
 						while i < z:
 							note = beat[i]
 							if type(note) == dict and 'flam' in note and note['flam'] == True:
-								print(note['surface'])
 								beat[ i+1 ]['flam'] = note['surface']
 								del beat[i]
 								z -= 1
@@ -44,7 +43,7 @@ class Convertor:
 					# annotate with durations
 					for note in beat:
 						if type(note) == list:
-							print('list')
+							#print('list')
 							for simultaneous in note:
 								simultaneous['duration'] = duration
 								#print(simultaneous['surface'])
@@ -114,25 +113,29 @@ class Convertor:
 				beats = len(measure['beats'])
 				# output measure's time signature
 				for beat in measure['beats']:
-					if tuple:
-						i = 0
-					for note in beat:
-						if note is list:
-							i = 0
-							ret += 'simul '
-						else:
+					for note2 in beat:
+						notes = []
+						if type(note2) == list:
+							#print('simul')
+							notes = note2
+							ret += '<< '
+						elif type(note2) == dict:
+							#print('note')
+							notes.append(note2)
+						
+						for note in notes:
 							# new dynamic:
 							if 'dynamic' in note:
 								ret += mapping[ note['dynamic'] ] + ' '
 
 							if 'flam' in note:
 								if instrument == 'snare':
-									i = 0
+									ret += '\\override Stem #\'length = #4 \\appoggiatura c\'\'8 \\revert Stem #\'length \stemUp '
 								else:
-									i = 0
+									ret += '\\override Stem #\'length = #4 \\appoggiatura ' + mapping[ note['flam'] ] + '8 \\revert Stem #\'length \stemUp '
 
 							elif 'flamRest' in note:
-								i = 0
+								ret += '\\appoggiatura r8 '
 
 							# note or rest?
 							if 'rest' in note:
@@ -151,8 +154,9 @@ class Convertor:
 							# should note be accented?
 							if 'accent' in note:
 								ret += ' \\accent'
+						if type(note2) == list:
+							ret += '>>'
 						ret += ' '
-					if tuple:
-						i = 0
+
 				ret += ' | '
 		return ret
