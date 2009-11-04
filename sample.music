@@ -6,21 +6,23 @@ tempo: 140
 
 snare:
 	(4/4)
-	P.lhlh .lhlh r-hh. lhhh | Mh-h-h xh-h hxh x | Phhhhhh h-h-h Mhxh rxrxrx | . . . l-hh-h
-	HhHhHh H PHhhhhh Mhh-h | hh-h xx . h-h-h | xh-h hhx -h-h-h-h xh | HH-h hxx hHh HhH
+	F,hh,hh -h-hxh hhrhrhH.h. x
 
+WHAT IF, put in r/l for surface? and within a beat, emits sticking when notes stray from alternating pattern?
+- but how do shots?
+	x - right shot
+	z - left shot?
+- for snare it can be super terse, but it's impossible for other drums ... so much more to capture
+
+	F,rr,ll -r-lxl rlrrl.r. z
+
+tenor:
+	F,baa,abb -a-bcd
 
 bass:
-	P{ab}.cc {de}.cc
-
+	Faabb
 
 ----
-
-P.lhlh .lhlh r-hh. lhhh | Mh-h-h xh-h hxh x | Phhhhhh h-h-h Mhxh rxrxrx | . . . l-hh-h
-HhHhHh H PHhhhhh Mhh-h | hh-h xx . h-h-h | xh-h hhx -h-h-h-h xh | HH-h hxx hHh HhH
-
--a-bc,cb cdd
-
 
 music = [
 	// measure

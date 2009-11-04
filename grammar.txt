@@ -4,11 +4,11 @@ details: detail string details
 
 detail: "author:" | "tempo:" | "timesignature:" | "title:"
 
-instruments: instrument space* music space* instruments | instrument space* music space*
+instruments: instrument music instruments | instrument music
 
 instrument: "snare:" | "bass:" | "tenor:" | "cymbal:"
 
-music: measure space* "|" space* music | measure
+music: measure "|" music | measure
 
 measure: beat space* measure | beat
 

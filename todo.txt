@@ -1,3 +1,6 @@
+- sub-beat tuplets
+- annotate measures with timeSignature if one wasn't parsed
+	- use beats in measure over 4 as default
 - when compiling for midi output
 	- add tap-off measure
 	- expand tremolos
