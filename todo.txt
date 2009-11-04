@@ -7,6 +7,8 @@
 
 - crescendos and decrescendos
         - starting and stopping points attached to notes
+	- don't need a dynamic to start a descrescendo/crescendo, but when in progress, a dynamic specifier STOPS it
+	- but what if a cresc stops and a decre begins on the same note?
 
 - parse unisons into simultaneous notes?
         - only when compiling for midi output?

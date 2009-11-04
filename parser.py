@@ -218,6 +218,8 @@ class Parser:
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
 			#'accent': False,
+			#'crescendo': False,
+			#'decrescendo': False,
 			#'diddle': False,
 			#'dynamic': False,
 			#'flam': False,
@@ -273,6 +275,10 @@ class Parser:
 				ret['dynamic'] = 'M'
 			if self.value == 'F':
 				ret['dynamic'] = 'F'
+			if self.value == '<':
+				ret['crescendo'] = True
+			if self.value == '>':
+				ret['decrescendo'] = True
 			self.accept('dynamic')
 			return ret
 
@@ -320,7 +326,7 @@ rules = [
 	("instrument", r"(snare|bass|tenor|cymbal):"),
 
 	#modifiers
-	("dynamic", r"[PMF]{1}"),
+	("dynamic", r"[<>PMF]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=-]"),
 

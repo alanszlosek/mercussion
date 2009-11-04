@@ -108,6 +108,10 @@ class Convertor:
 
 		# annotate with flamRest placeholders
 
+		# set this flag when we encounter one of them
+		# unset it when we encounter the first dynamic that's not one
+		crescendoDecrescendo = False
+
 		for (instrument,music) in a['instruments'].items():
 			for measure in music:
 				beats = len(measure['beats'])
@@ -125,8 +129,19 @@ class Convertor:
 						
 						for note in notes:
 							# new dynamic:
+							if 'dynamic' in note and crescendoDecrescendo:
+								# end it
+								crescendoDecrescendo = False
+								ret += '\! '
+							if 'decrescendo' in note:
+								crescendoDecrescendo = True
+								ret += mapping['>'] + ' '
 							if 'dynamic' in note:
 								ret += mapping[ note['dynamic'] ] + ' '
+							# crescendo after the dynamic because it specifies the starting dynamic
+							if 'crescendo' in note:
+								crescendoDecrescendo = True
+								ret += mapping['<'] + ' '
 
 							if 'flam' in note:
 								if instrument == 'snare':
