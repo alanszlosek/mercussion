@@ -10,10 +10,26 @@ class Convertor:
 		# should become
 		# 32 32 16 32 32 32 32
 
+		# for tenors, merge flam notes together
+
 		# annotate with durations
-		for instrument in parsed['instruments'].values():
-			for measure in instrument:
+		for (instrument,music) in parsed['instruments'].items():
+			for measure in music:
 				for beat in measure['beats']:
+					# fix tenor flams
+					if instrument == 'tenor':
+						i = 0
+						z = len(beat)
+						while i < z:
+							note = beat[i]
+							if type(note) == dict and 'flam' in note and note['flam'] == True:
+								print(note['surface'])
+								beat[ i+1 ]['flam'] = note['surface']
+								del beat[i]
+								z -= 1
+
+							i += 1
+
 					notes = len(beat)
 					tuple = False
 					if notes == 6 or notes == 5:
@@ -63,6 +79,8 @@ class Convertor:
 
 	def toLilypond(self, parsed, settings={}):
 		a = self.condense(parsed)
+		#print( repr(a) )
+		#sys.exit()
 		ret = ''
 		mapping = {
 			'h': 'c\'\'',
@@ -91,8 +109,8 @@ class Convertor:
 
 		# annotate with flamRest placeholders
 
-		for pair in a['instruments'].items():
-			for measure in pair[1]:
+		for (instrument,music) in a['instruments'].items():
+			for measure in music:
 				beats = len(measure['beats'])
 				# output measure's time signature
 				for beat in measure['beats']:
@@ -109,6 +127,11 @@ class Convertor:
 
 							if 'flam' in note:
 								 i = 0
+								if instrument == 'snare':
+									i = 0
+								else:
+									i = 0
+
 							elif 'flamRest' in note:
 								i = 0
 

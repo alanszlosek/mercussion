@@ -297,11 +297,12 @@ class Parser:
 			self.die('EOI')
 
 		# snare
-		if self.value == 'H' or self.value == 'X':
+		if self.value == '.': #rest
+			ret['rest'] = True
+		elif re.search(self.value, "ABCDEFX"):
+			# why would value='.' be matched here?
 			ret['accent'] = True
 			ret['surface'] = self.value.lower()
-		elif self.value == '.': #rest
-			ret['rest'] = True
 		else:
 			ret['surface'] = self.value
 			
@@ -342,11 +343,10 @@ rules = [
 lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 
 #tokens = lex.scan("title:\"Listen here Fucker\" author: \"Alan Szlosek\" snare:\n\tPH-hhh x.hh ,hh,hh | lhlh =h=h\nbass:\n\tPaa bb cc|aabb")
-
 #tokens = lex.scan("snare:(ab).cd aab bbc | . . . | a b c")
-tokens = lex.scan("snare:P,H.hh -hHhh Mhhh.hh")
-
+#tokens = lex.scan("snare:P,H.hh -hHhh Mhhh.hh")
 #tokens = lex.scan("b.cd")
+tokens = lex.scan("tenor: ,bCba,aD abC.")
 
 parser = Parser(tokens)
 a = parser.score()
