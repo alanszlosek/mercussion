@@ -80,7 +80,49 @@ class Convertor:
 		a = self.condense(parsed)
 		#print( repr(a) )
 		#sys.exit()
-		ret = ''
+
+		ret = '\\version "2.8.7"\n'
+
+		#ret += '#(define (myDynamics dynamic) (if (equal? dynamic "p") 0.05 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "mf") 0.35 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "f") 0.65 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "ff") 0.95 (default-dynamic-absolute-volume dynamic)))'
+
+		ret += '#(define my-instrument-equalizer-alist \'())\n'
+		ret += '#(set! my-instrument-equalizer-alist\n'
+		ret += '\t(append\n'
+		ret += '\t\t\'(\n'
+		ret += '\t\t\t("electric grand" . (0.01 . 0.5))\n' # snare. this doesn't seem to work
+		ret += '\t\t\t("bright acoustic" . (0.01 . 0.8))\n' # bring tenor volume down?
+		ret += '\t\t\t("acoustic grand" . (0.01 . 1.0))\n' # bass
+		ret += '\t\t\t("honky-tonk" . (0.01 . 1.0))\n' # cymbal
+		ret += '\t\t)\n'
+		ret += '\t\tmy-instrument-equalizer-alist\n'
+		ret += '\t)\n'
+		ret += ')\n'
+		ret += '#(define (my-instrument-equalizer s)\n'
+		ret += '\t(let ((entry (assoc s my-instrument-equalizer-alist)))\n'
+		ret += '\t(if entry\n'
+		ret += '(cdr entry))))\n\n'
+
+		ret += 'appoggiatura = #(define-music-function (parser location grace main) (ly:music? ly:music?) (let* ( (maindur (ly:music-length main))  (grace-orig-len (ly:music-length grace)) (numerator (ly:moment-main-numerator maindur)) (factor (ly:make-moment 1 20)) ) (ly:music-compress grace factor) (ly:music-compress main (ly:moment-sub (ly:make-moment 1 1) factor))  (set! (ly:music-property grace \'elements) (append (ly:music-property grace \'elements) (list (make-music \'SlurEvent \'span-direction -1)) ) ) (set! (ly:music-property main \'elements) (append (ly:music-property main \'elements) (list (make-music \'SlurEvent \'span-direction 1)) ) ) (make-sequential-music (list grace main)) ) )\n\n'
+
+		ret += 'flam = {\n'
+		ret += '\t\\override Stem #\'length = #4\n'
+		#print('\t\\acciaccatura c\'\'8\n'
+		#print('\t\\grace c\'\'8\n'
+		ret += '\t\\appoggiatura c\'\'8 \n'
+		ret += '\t\\revert Stem #\'length\n'
+		ret += '}\n\n'
+
+		ret += '\\header {\n'
+		if 'title' in a:
+			ret += '\ttitle="' + a['title'] + '"\n'
+		if 'composer' in a:
+			ret += '\tcomposer="' + a['composer'] + '"\n'
+			ret += '\tcopyright = \\markup {"Copyright" \\char ##x00A9 "' + a['composer'] + '"}\n'
+		ret += '}\n\n'
+
+		ret += '\\score {\n'
+		ret += '\t<<\n'
+
 		mapping = {
 			'h': 'c\'\'',
 			'x': 'c\'\'', # rim shot
@@ -113,6 +155,33 @@ class Convertor:
 		crescendoDecrescendo = False
 
 		for (instrument,music) in a['instruments'].items():
+
+			if instrument == 'snare':
+				ret += '\t% Snare\n'
+				ret += '\t\\new Staff {\n'
+				ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
+				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
+				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				ret += '\t\t\\set Staff.midiMaximumVolume = #0.50\n'
+				#self.beaming()
+				#print('\\time ' + self.timeSignature)
+
+			ret += '\t\t#(set! absolute-volume-alist\n'
+			ret += '\t\t\t(append\n'
+			ret += '\t\t\t\t\'(\n'
+			ret += '\t\t\t\t\t("ff" . 1.00)\n'
+			ret += '\t\t\t\t\t("f" . 0.70)\n'
+			ret += '\t\t\t\t\t("mf" . 0.40)\n'
+			ret += '\t\t\t\t\t("p" . 0.10)\n'
+			ret += '\t\t\t\t)\n'
+			ret += '\t\t\t\tabsolute-volume-alist\n'
+			ret += '\t\t\t)\n'
+			ret += '\t\t)\n'
+
+			ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
+
+			ret += '\t\t\\stemUp\n'
+
 			for measure in music:
 				beats = len(measure['beats'])
 				# output measure's time signature
@@ -128,6 +197,7 @@ class Convertor:
 							notes.append(note2)
 						
 						for note in notes:
+							# i actually think dynamics are supposed to go after notes. ugh
 							# new dynamic:
 							if 'dynamic' in note and crescendoDecrescendo:
 								# end it
@@ -159,6 +229,7 @@ class Convertor:
 								ret += mapping[ note['surface'] ] + str(note['duration'])
 
 							# diddle?
+							# check flag for whether to expand tremolos
 							if 'diddle' in note:
 								ret += ':' + str(note['duration']*2)
 
@@ -173,5 +244,20 @@ class Convertor:
 							ret += '>>'
 						ret += ' '
 
-				ret += ' | '
+				ret += ' \n '
+			ret += '}\n'
+
+		ret += '>>\n'
+		ret += '\t\\layout {\n'
+		#print('\t\tindent = 0')
+		ret += '\t}\n'
+		ret += '\t\\midi {\n'
+		ret += '\t\t\\context {\n'
+		ret += '\t\t\t\\Score\n'
+		ret += '\t\t\ttempoWholesPerMinute = #(ly:make-moment 120 4)\n'
+		ret += '\t\t\tmidiMinimumVolume = #0.05\n'
+		ret += '\t\t\tmidiMaximumVolume = #0.95\n'
+		ret += '\t\t}\n'
+		ret += '\t}\n'
+		ret += '}\n'
 		return ret

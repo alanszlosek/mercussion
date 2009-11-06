@@ -375,4 +375,4 @@ settings = {
 }
 b = convertor.toLilypond(a, settings)
 
-print( repr(b) )
+print( b )
