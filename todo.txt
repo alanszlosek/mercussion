@@ -1,3 +1,4 @@
+- flag for whether to expand tremolos, etc
 - sub-beat tuplets
 - annotate measures with timeSignature if one wasn't parsed
 	- use beats in measure over 4 as default
