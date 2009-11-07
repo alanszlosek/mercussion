@@ -70,7 +70,7 @@ class Parser:
 	def details(self):
 		ret = {}
 		while self.token == 'detail':
-			detail = self.value
+			detail = self.value.replace(':', '')
 			self.accept('detail')
 			while self.token == 'space':
 				self.accept('space')
@@ -354,9 +354,15 @@ lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 #tokens = lex.scan("b.cd")
 #tokens = lex.scan("snare: hhhh hhh. tenor: ,bCba,aD abC.")
 
-
+settings = {
+	'fixFlams': False,
+	'expandTremolos': False,
+	'tapOff': False
+}
 if sys.argv[1] == '--midi':
-	tweakForMidi = True
+	settings['fixFlams'] = True
+	settings['expandTremolos'] = True
+	settings['tapOff'] = True
 	f = open(sys.argv[2], 'r')
 else:
 	f = open(sys.argv[1], 'r')
@@ -369,10 +375,6 @@ a = parser.score()
 #print( repr(a) )
 
 convertor = Convertor()
-settings = {
-	'expantTremolos': False,
-	'tapOff': False
-}
 b = convertor.toLilypond(a, settings)
 
 print( b )

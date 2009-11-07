@@ -2,6 +2,60 @@ class Convertor:
 	def __init__(self):
 		i = 0
 
+	def flams(self, parsed):
+		instruments = parsed['instruments'].keys()
+		measure = 0
+		beat = 0
+		note = 0
+		done = False
+
+		flams = []
+
+		while not done:
+			measureNotFound = False
+			beatNotFound = False
+			foundFlam = False
+			for instrument in instruments:
+				print(instrument)
+				# if we've gone past beats
+				# if we've gone past measures
+				if measure >= len(parsed['instruments'][ instrument ] ):
+					measureNotFound = True
+					print('measure not found: ' + str(measure) )
+					continue
+				if beat >= len( parsed['instruments'][ instrument ][ measure ]['beats'] ):
+					beatNotFound = True
+					print('beat not found: ' + str(beat) )
+					continue
+				notes = parsed['instruments'][ instrument ][ measure ]['beats'][ beat ]
+
+				i = 0
+				z = len(notes)
+				while i < z:
+					note = notes[ i ]
+					if type(note) == dict:
+						if 'flam' in note:
+							foundFlam = True
+							flams.append( (instrument, measure, beat, i) )
+					i += 1
+
+			# somehow fill in flam spacers
+
+			if measureNotFound and beatNotFound:
+				done = True
+			elif measureNotFound:
+				done = True
+			elif beatNotFound:
+				beat = 0
+				measure += 1
+			else:
+				beat += 1
+		
+		print( repr( flams ))
+		return {}
+		return parsed	
+
+
 	def condense(self, parsed):
 		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
 
@@ -77,6 +131,8 @@ class Convertor:
 		return parsed
 
 	def toLilypond(self, parsed, settings={}):
+		#a = self.flams(parsed)
+		#return ''
 		a = self.condense(parsed)
 		#print( repr(a) )
 		#sys.exit()
@@ -89,8 +145,8 @@ class Convertor:
 		ret += '#(set! my-instrument-equalizer-alist\n'
 		ret += '\t(append\n'
 		ret += '\t\t\'(\n'
-		ret += '\t\t\t("electric grand" . (0.01 . 0.5))\n' # snare. this doesn't seem to work
-		ret += '\t\t\t("bright acoustic" . (0.01 . 0.8))\n' # bring tenor volume down?
+		ret += '\t\t\t("electric grand" . (0.01 . 1.0))\n' # snare. this doesn't seem to work
+		ret += '\t\t\t("bright acoustic" . (0.01 . 1.0))\n' # bring tenor volume down?
 		ret += '\t\t\t("acoustic grand" . (0.01 . 1.0))\n' # bass
 		ret += '\t\t\t("honky-tonk" . (0.01 . 1.0))\n' # cymbal
 		ret += '\t\t)\n'
@@ -102,7 +158,8 @@ class Convertor:
 		ret += '\t(if entry\n'
 		ret += '(cdr entry))))\n\n'
 
-		ret += 'appoggiatura = #(define-music-function (parser location grace main) (ly:music? ly:music?) (let* ( (maindur (ly:music-length main))  (grace-orig-len (ly:music-length grace)) (numerator (ly:moment-main-numerator maindur)) (factor (ly:make-moment 1 20)) ) (ly:music-compress grace factor) (ly:music-compress main (ly:moment-sub (ly:make-moment 1 1) factor))  (set! (ly:music-property grace \'elements) (append (ly:music-property grace \'elements) (list (make-music \'SlurEvent \'span-direction -1)) ) ) (set! (ly:music-property main \'elements) (append (ly:music-property main \'elements) (list (make-music \'SlurEvent \'span-direction 1)) ) ) (make-sequential-music (list grace main)) ) )\n\n'
+		if settings['fixFlams']:
+			ret += 'appoggiatura = #(define-music-function (parser location grace main) (ly:music? ly:music?) (let* ( (maindur (ly:music-length main))  (grace-orig-len (ly:music-length grace)) (numerator (ly:moment-main-numerator maindur)) (factor (ly:make-moment 1 15)) ) (ly:music-compress grace factor) (ly:music-compress main (ly:moment-sub (ly:make-moment 1 1) factor))  (set! (ly:music-property grace \'elements) (append (ly:music-property grace \'elements) (list (make-music \'SlurEvent \'span-direction -1)) ) ) (set! (ly:music-property main \'elements) (append (ly:music-property main \'elements) (list (make-music \'SlurEvent \'span-direction 1)) ) ) (make-sequential-music (list grace main)) ) )\n\n'
 
 		ret += 'flam = {\n'
 		ret += '\t\\override Stem #\'length = #4\n'
@@ -114,10 +171,11 @@ class Convertor:
 
 		ret += '\\header {\n'
 		if 'title' in a:
+			print('title')
 			ret += '\ttitle="' + a['title'] + '"\n'
-		if 'composer' in a:
-			ret += '\tcomposer="' + a['composer'] + '"\n'
-			ret += '\tcopyright = \\markup {"Copyright" \\char ##x00A9 "' + a['composer'] + '"}\n'
+		if 'author' in a:
+			ret += '\tauthor="' + a['author'] + '"\n'
+			ret += '\tcopyright = \\markup {"Copyright" \\char ##x00A9 "' + a['author'] + '"}\n'
 		ret += '}\n\n'
 
 		ret += '\\score {\n'
@@ -161,25 +219,41 @@ class Convertor:
 				ret += '\t\\new Staff {\n'
 				ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
-				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				ret += '\t\t\\set Staff.midiMaximumVolume = #0.50\n'
+				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.50\n'
+
 				#self.beaming()
 				#print('\\time ' + self.timeSignature)
+			elif instrument == 'tenor':
+				ret += '\t% Tenor\n'
+				ret += '\t\\new Staff {\n'
+				ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
+				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
+			elif instrument == 'bass':
+				ret += '\t% Bass\n'
+				ret += '\t\\new Staff {\n'
+				ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
+				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
+			elif instrument == 'cymbal':
+				ret += '\t% Cymbals\n'
+				ret += '\t\\new Staff {\n'
+				ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
+				ret +='\t\t\\set Staff.instrumentName = #"Cymbals "\n'
 
-			ret += '\t\t#(set! absolute-volume-alist\n'
-			ret += '\t\t\t(append\n'
-			ret += '\t\t\t\t\'(\n'
-			ret += '\t\t\t\t\t("ff" . 1.00)\n'
-			ret += '\t\t\t\t\t("f" . 0.70)\n'
-			ret += '\t\t\t\t\t("mf" . 0.40)\n'
-			ret += '\t\t\t\t\t("p" . 0.10)\n'
-			ret += '\t\t\t\t)\n'
-			ret += '\t\t\t\tabsolute-volume-alist\n'
-			ret += '\t\t\t)\n'
-			ret += '\t\t)\n'
+			# this doesn't seem to work
+			#ret += '\t\t#(set! absolute-volume-alist\n'
+			#ret += '\t\t\t(append\n'
+			#ret += '\t\t\t\t\'(\n'
+			#ret += '\t\t\t\t\t("ff" . 1.00)\n'
+			#ret += '\t\t\t\t\t("f" . 0.70)\n'
+			#ret += '\t\t\t\t\t("mf" . 0.40)\n'
+			#ret += '\t\t\t\t\t("p" . 0.10)\n'
+			#ret += '\t\t\t\t)\n'
+			#ret += '\t\t\t\tabsolute-volume-alist\n'
+			#ret += '\t\t\t)\n'
+			#ret += '\t\t)\n'
 
 			ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
-
 			ret += '\t\t\\stemUp\n'
 
 			for measure in music:
