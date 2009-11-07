@@ -305,7 +305,7 @@ class Parser:
 		# snare
 		if self.value == '.': #rest
 			ret['rest'] = True
-		elif re.search(self.value, "ABCDEFX"):
+		elif re.search(self.value, "ABCDEFXH"):
 			# why would value='.' be matched here?
 			ret['accent'] = True
 			ret['surface'] = self.value.lower()
@@ -363,6 +363,7 @@ if sys.argv[1] == '--midi':
 	settings['fixFlams'] = True
 	settings['expandTremolos'] = True
 	settings['tapOff'] = True
+	settings['midi'] = True
 	f = open(sys.argv[2], 'r')
 else:
 	f = open(sys.argv[1], 'r')

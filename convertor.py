@@ -68,6 +68,7 @@ class Convertor:
 
 		# annotate with durations
 		for (instrument,music) in parsed['instruments'].items():
+			dynamic = ''
 			for measure in music:
 				for beat in measure['beats']:
 					# fix tenor flams
@@ -126,6 +127,22 @@ class Convertor:
 								
 				
 						i += 2
+
+					# set dynamics on accents and next note
+					for note in beat:
+						if type(note) == dict:
+							if 'dynamic' in note:
+								dynamic = note['dynamic']
+							elif 'accent' in note:
+								if dynamic:
+									note['dynamic'] = self.accentFrom(dynamic)
+								else: # default to mf
+									note['dynamic'] = self.accentFrom('M')
+									dynamic = 'M'
+							elif dynamic:
+								note['dynamic'] = dynamic
+								dynamic = ''
+								
 						
 
 		return parsed
@@ -135,12 +152,12 @@ class Convertor:
 		#return ''
 		a = self.condense(parsed)
 		#print( repr(a) )
-		#sys.exit()
+		#return
 
 		ret = '\\version "2.8.7"\n'
 
 		# not sure if this would work with timidity
-		#ret += '#(define (myDynamics dynamic) (if (equal? dynamic "p") 0.05 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "mf") 0.35 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "f") 0.65 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "ff") 0.95 (default-dynamic-absolute-volume dynamic)))'
+		ret += '#(define (myDynamics dynamic) (if (equal? dynamic "p") 0.20 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "mf") 0.60 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "f") 1.00 (default-dynamic-absolute-volume dynamic)))\n'
 
 		# but this didn't work with timidity
 		#ret += '#(define my-instrument-equalizer-alist \'())\n'
@@ -213,6 +230,7 @@ class Convertor:
 		# set this flag when we encounter one of them
 		# unset it when we encounter the first dynamic that's not one
 		crescendoDecrescendo = False
+		dynamic = 'M'
 
 		for (instrument,music) in a['instruments'].items():
 
@@ -286,15 +304,6 @@ class Convertor:
 								# end it
 								crescendoDecrescendo = False
 								ret += '\! '
-							if 'decrescendo' in note:
-								crescendoDecrescendo = True
-								ret += mapping['>'] + ' '
-							if 'dynamic' in note:
-								ret += mapping[ note['dynamic'] ] + ' '
-							# crescendo after the dynamic because it specifies the starting dynamic
-							if 'crescendo' in note:
-								crescendoDecrescendo = True
-								ret += mapping['<'] + ' '
 
 							if 'flam' in note:
 								if instrument == 'snare':
@@ -320,9 +329,20 @@ class Convertor:
 							if 'fours' in note:
 								ret += ':' + str(note['duration']*4)
 
+							if 'decrescendo' in note:
+								crescendoDecrescendo = True
+								ret += mapping['>'] + ' '
+							if 'dynamic' in note:
+								ret += mapping[ note['dynamic'] ] + ' '
+							# crescendo after the dynamic because it specifies the starting dynamic
+							if 'crescendo' in note:
+								crescendoDecrescendo = True
+								ret += mapping['<'] + ' '
+
 							# should note be accented?
 							if 'accent' in note:
 								ret += ' \\accent'
+
 						if type(note2) == list:
 							ret += '>>'
 						ret += ' '
@@ -339,8 +359,19 @@ class Convertor:
 		ret += '\t\t\t\\Score\n'
 		ret += '\t\t\ttempoWholesPerMinute = #(ly:make-moment 120 4)\n'
 		ret += '\t\t\tmidiMinimumVolume = #0.05\n'
-		ret += '\t\t\tmidiMaximumVolume = #0.95\n'
+		ret += '\t\t\tmidiMaximumVolume = #1.00\n'
 		ret += '\t\t}\n'
 		ret += '\t}\n'
 		ret += '}\n'
 		return ret
+
+	def accentFrom(self, dynamic):
+                if dynamic == 'P':
+                        return 'M'
+                elif dynamic == 'M':
+                        return 'F'
+                elif dynamic == 'F':
+                        return 'G'
+                elif dynamic == 'G':
+                        return 'G'
+
