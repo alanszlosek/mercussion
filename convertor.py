@@ -139,24 +139,26 @@ class Convertor:
 
 		ret = '\\version "2.8.7"\n'
 
+		# not sure if this would work with timidity
 		#ret += '#(define (myDynamics dynamic) (if (equal? dynamic "p") 0.05 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "mf") 0.35 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "f") 0.65 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "ff") 0.95 (default-dynamic-absolute-volume dynamic)))'
 
-		ret += '#(define my-instrument-equalizer-alist \'())\n'
-		ret += '#(set! my-instrument-equalizer-alist\n'
-		ret += '\t(append\n'
-		ret += '\t\t\'(\n'
-		ret += '\t\t\t("electric grand" . (0.01 . 1.0))\n' # snare. this doesn't seem to work
-		ret += '\t\t\t("bright acoustic" . (0.01 . 1.0))\n' # bring tenor volume down?
-		ret += '\t\t\t("acoustic grand" . (0.01 . 1.0))\n' # bass
-		ret += '\t\t\t("honky-tonk" . (0.01 . 1.0))\n' # cymbal
-		ret += '\t\t)\n'
-		ret += '\t\tmy-instrument-equalizer-alist\n'
-		ret += '\t)\n'
-		ret += ')\n'
-		ret += '#(define (my-instrument-equalizer s)\n'
-		ret += '\t(let ((entry (assoc s my-instrument-equalizer-alist)))\n'
-		ret += '\t(if entry\n'
-		ret += '(cdr entry))))\n\n'
+		# but this didn't work with timidity
+		#ret += '#(define my-instrument-equalizer-alist \'())\n'
+		#ret += '#(set! my-instrument-equalizer-alist\n'
+		#ret += '\t(append\n'
+		#ret += '\t\t\'(\n'
+		#ret += '\t\t\t("electric grand" . (0.01 . 1.0))\n' # snare. this doesn't seem to work
+		#ret += '\t\t\t("bright acoustic" . (0.01 . 1.0))\n' # bring tenor volume down?
+		#ret += '\t\t\t("acoustic grand" . (0.01 . 1.0))\n' # bass
+		#ret += '\t\t\t("honky-tonk" . (0.01 . 1.0))\n' # cymbal
+		#ret += '\t\t)\n'
+		#ret += '\t\tmy-instrument-equalizer-alist\n'
+		#ret += '\t)\n'
+		#ret += ')\n'
+		#ret += '#(define (my-instrument-equalizer s)\n'
+		#ret += '\t(let ((entry (assoc s my-instrument-equalizer-alist)))\n'
+		#ret += '\t(if entry\n'
+		#ret += '(cdr entry))))\n\n'
 
 		if settings['fixFlams']:
 			ret += 'appoggiatura = #(define-music-function (parser location grace main) (ly:music? ly:music?) (let* ( (maindur (ly:music-length main))  (grace-orig-len (ly:music-length grace)) (numerator (ly:moment-main-numerator maindur)) (factor (ly:make-moment 1 15)) ) (ly:music-compress grace factor) (ly:music-compress main (ly:moment-sub (ly:make-moment 1 1) factor))  (set! (ly:music-property grace \'elements) (append (ly:music-property grace \'elements) (list (make-music \'SlurEvent \'span-direction -1)) ) ) (set! (ly:music-property main \'elements) (append (ly:music-property main \'elements) (list (make-music \'SlurEvent \'span-direction 1)) ) ) (make-sequential-music (list grace main)) ) )\n\n'
@@ -219,8 +221,8 @@ class Convertor:
 				ret += '\t\\new Staff {\n'
 				ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
-				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.50\n'
+				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				ret += '\t\t\\set Staff.midiMaximumVolume = #0.60\n'
 
 				#self.beaming()
 				#print('\\time ' + self.timeSignature)
@@ -229,16 +231,22 @@ class Convertor:
 				ret += '\t\\new Staff {\n'
 				ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
+				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				ret += '\t\t\\set Staff.midiMaximumVolume = #0.90\n'
 			elif instrument == 'bass':
 				ret += '\t% Bass\n'
 				ret += '\t\\new Staff {\n'
 				ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
+				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				ret += '\t\t\\set Staff.midiMaximumVolume = #1.00\n'
 			elif instrument == 'cymbal':
 				ret += '\t% Cymbals\n'
 				ret += '\t\\new Staff {\n'
 				ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
 				ret +='\t\t\\set Staff.instrumentName = #"Cymbals "\n'
+				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				ret += '\t\t\\set Staff.midiMaximumVolume = #0.80\n'
 
 			# this doesn't seem to work
 			#ret += '\t\t#(set! absolute-volume-alist\n'
@@ -253,7 +261,8 @@ class Convertor:
 			#ret += '\t\t\t)\n'
 			#ret += '\t\t)\n'
 
-			ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
+			# this didn't work with timidity
+			#ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
 			ret += '\t\t\\stemUp\n'
 
 			for measure in music:
