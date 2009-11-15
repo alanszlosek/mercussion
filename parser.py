@@ -331,6 +331,8 @@ rules = [
 	("articulation", r"[,=-]"),
 
 	("noteSurface", r"[hHxXaAbBcCdDeEuU.]"),
+	("bassTenorNote", r"[hHxXaAbBcCdDeEuU.]"),
+	("snareNote", r"[rRlLxX.]"),
 
 	("pipe", r"\|"),
 

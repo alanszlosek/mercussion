@@ -66,6 +66,8 @@ class Convertor:
 
 		# for tenors, merge flam notes together
 
+		# expand unison surface into simultaneous based on number of basses?
+
 		# annotate with durations
 		for (instrument,music) in parsed['instruments'].items():
 			dynamic = ''
