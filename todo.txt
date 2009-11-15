@@ -24,6 +24,8 @@
 
 - ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
 
+Done:
+
 - explicit \break every 4 measures
 
 Questions:

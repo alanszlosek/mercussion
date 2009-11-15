@@ -285,6 +285,7 @@ class Convertor:
 			#ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
 			ret += '\t\t\\stemUp\n'
 
+			iMeasure = 1
 			for measure in music:
 				beats = len(measure['beats'])
 				# output measure's time signature
@@ -350,6 +351,12 @@ class Convertor:
 						ret += ' '
 
 				ret += ' \n '
+				if iMeasure == 4:
+					ret += ' \\break '
+					iMeasure = 1
+				else:
+					iMeasure += 1
+		
 			ret += '}\n'
 
 		ret += '>>\n'
