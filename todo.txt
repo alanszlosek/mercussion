@@ -18,8 +18,6 @@
 
 - shots on tenors
 
-- proper clef on percussion staves
-
 - ability to specify the number of basses (for unison expansion ... or should we even expand them)?
 
 - ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
@@ -27,6 +25,7 @@
 Done:
 
 - explicit \break every 4 measures
+- proper clef on percussion staves
 
 Questions:
 

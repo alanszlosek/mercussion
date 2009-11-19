@@ -1,4 +1,3 @@
-
 title: "Hey there"
 author: "Somebody"
 timesignature: 4/4
@@ -18,9 +17,17 @@ WHAT IF, put in r/l for surface? and within a beat, emits sticking when notes st
 
 tenor:
 	F,baa,abb -a-bcd
+	arblarr
+
+	{rlrr}alb. // might need lookahead of 1 for this	
 
 bass:
 	Faabb
+
+----
+NOTES
+
+snare
 
 ----
 

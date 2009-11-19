@@ -4,31 +4,49 @@ details: detail string details
 
 detail: "author:" | "tempo:" | "timesignature:" | "title:"
 
-instruments: instrument music instruments | instrument music
+instruments: instrument instruments | instrument
 
-instrument: "snare:" | "bass:" | "tenor:" | "cymbal:"
+instrument: "snare:" snareMusic | "bass:" bassTenorMusic | "tenor:" bassTenorMusic | "cymbal:" cymbalMusic
 
-music: measure "|" music | measure
 
-measure: beat space* measure | beat
+// snare
+snareMusic: snareMeasure "|" snareMusic | snareMeasure
 
-// incomplete
-firstBeat: timeSignature space* beat
+snareMeasure: snareBeat space* snareMeasure | snareBeat
 
-beat: "(" simultaneousNotes ")" | note beat | note
+// can put in simultaneous here when need to for cymbal stuff
+snareBeat: snareNote snareBeat | snareNote
 
-simultaneousNotes: note simultaneousNotes | note
+snareNote: snareModifers snareSurface | snareSurface
 
-note: modifers noteSurface | noteSurface
+snareModifiers: snareModifier snareModifiers | snareModifier
 
-modifiers: modifier modifiers | modifier
+snareModifier: [PMF] | [,-=]
 
-modifier: [PMF] | [rl] | [,-=] | // surface(rim)
+snareSurface: [rlxXyYrRsS] | '.'
 
-noteSurface: [hHxX] | [aAbBcCdDeE] | '.'
-// numbers for drums instead of letters? so we can support 6 basses and F for Forte
-// but letter allow for accents embedded into drum specification
-// but we DO need accents on rims
+
+// bass and tenors
+bassTenorMusic: bassTenorMeasure "|" bassTenorMusic | bassTenorMeasure
+
+bassTenorMeasure: bassTenorBeat space* bassTenorMeasure | bassTenorBeat
+
+// gar ... get the combos right is a bitch
+bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
+
+bassTenorSimultaneousNotes: bassTenorNote bassTenorSimultaneousNotes | bassTenorNote
+
+bassTenorSticking: [rl] bassTenorSticking | [rl]
+
+bassTenorNote: bassTenorModifers bassTenorSurface | bassTenorSurface
+
+bassTenorModifiers: bassTenorModifier bassTenorModifiers | bassTenorModifier
+
+bassTenorModifier: [PMF] | [,-=]
+
+bassTenorSurface: [aAbBcCdDeEuU] | '.'
+
+
 
 tuplet_begin: "["
 
