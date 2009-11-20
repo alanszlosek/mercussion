@@ -1,0 +1,85 @@
+snare: F,hh,hh -h-hxh hhrhrhH.h. x
+
+WHAT IF we could use r/l for the snare notes? and within a beat, emits sticking when notes stray from alternating pattern? 
+
+- but how do shots?
+        x - right shot
+        z - left shot?
+- what about buzzes, that would make sense as z?
+	- a buzz is NOT a different surface, it's a stroke style?
+	- tilde before note
+
+For snare it can be super terse, but it's impossible for other drums ... so much more to capture
+
+F,rr,ll -r-lxl rlrrl.r. z
+
+- buzz ~
+- rim x(tenor,snare: before note) OR r(snare)
+- shot x y (right shot, left shot)
+- backstick b c (right backstick, left backstick)
+- head abcdefh
+- accented UPPERCASE
+- diddle -
+- four =
+- flam , (on snare, next note isn't a grace)
+- right or left r l (snare, hands are the notes?)
+
+SNARE
+Head
+	r l
+Shot
+	x y
+Rim
+	r s
+Backstick
+	b c
+Accent
+	Uppercase version of one of the above
+Flam
+	, before note that should be flammed
+Sticking
+	Ugh, totally different than other drums, but easier to do most common things. Problem is when you want to specity that a shot should be on the left hand .. WTF is "y"?
+
+
+TENOR
+Drum
+	abcd12
+	OR
+	abcdef
+	ABCDEF
+Rim
+	123456
+	probably better do a modifier
+Flam
+	,bAbc. abcdd...
+
+Shots
+	*abc.
+
+Sticking - before Drum specifier
+	r l
+	OR
+	{rlrr} before Drum specifier to signify multiple notes on the same drum
+	
+
+CYMBAL
+Crash
+	c for crash
+Choke (stop)
+	r for rest
+Chick
+	h for hi-hat
+Tap
+	t
+Slide-choke (fusion?)
+	s f
+
+
+ALL
+Diddle
+	-
+Four
+	=
+	
+
+I'm a programmer, working on a language of sorts for representing marching percussion music on the computer. I tend to like tools where I can enter data via keyboard instead of using mouse clicks.

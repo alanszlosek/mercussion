@@ -19,7 +19,7 @@ tenor:
 	F,baa,abb -a-bcd
 	arblarr
 
-	{rlrr}alb. // might need lookahead of 1 for this	
+	{rlrr}alb. // need to back-modify the tree, ugh.
 
 bass:
 	Faabb
