@@ -1,7 +1,6 @@
 - flag for whether to expand tremolos, etc
 - sub-beat tuplets
-- annotate measures with timeSignature if one wasn't parsed
-	- use beats in measure over 4 as default
+	- 16 16 (16 16 16)
 - when compiling for midi output
 	- add tap-off measure
 	- expand tremolos
@@ -19,8 +18,12 @@
 - shots on tenors
 
 - ability to specify the number of basses (for unison expansion ... or should we even expand them)?
+	- yes, expand for midi
 
 - ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
+
+- annotate measures with timeSignature if one wasn't parsed
+	- use beats in measure over 4 as default
 
 Done:
 
