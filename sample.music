@@ -1,16 +1,13 @@
 title: "Hey there"
 author: "Somebody"
-timesignature: 4/4
-tempo: 140
+timesignature: "4/4"
+tempo: "140"
 
 snare:
-	(4/4)
-	F,rr,ll -r-lxl rlrrl.r. z
+	F,hh,hh:rrll -h-hxh hhhhh.h.:rlrrl.r. x:l
 
 tenor:
-	F,baa,abb -a-bcd {rlrr}ab.c. // need to back-modify the tree, ugh.
-	aaaab.c.#rlrrl.r.
-	arblarr 
+	F,baa,abb:rrll -a-bcd aaaab.c.:rlrrlr
 
 bass:
 	Faabb

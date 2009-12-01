@@ -19,8 +19,8 @@ class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
-		self.debug = True
-		self.debug2 = True
+		self.debug = False
+		self.debug2 = False
 
 	def die(self, message):
 		print(message)
@@ -157,7 +157,7 @@ class Parser:
 			'timeSignature': '4/4',
 			'beats': []
 		}
-		while 1:
+		while 1: # wish we had a do..while
 			a = self.snareBeat()
 			if len(a) == 0:
 				break
@@ -174,7 +174,7 @@ class Parser:
 			print('In beat()')
 		# returns an array of notes
 		ret = []
-		while 1:
+		while ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token):
 			# digest notes
 			a = self.snareNote()
 			if a == self.NotFound:
@@ -184,12 +184,6 @@ class Parser:
 			else:
 				ret.append(a)
 
-
-			# notes or modifiers
-			if ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token) == 0:
-				if self.debug:
-					print('Break from snareNotes()')
-				break
 
 		# are we at the sticking separator?
 		if self.token == 'startSticking':
@@ -226,7 +220,7 @@ class Parser:
 			#'notes': [],
 			#'rest': False,
 			#'sticking': False,
-			'surface': False
+			#'surface': False
 		}
 		
 		# flow control here by instrument, since they're all similar?
@@ -279,9 +273,6 @@ class Parser:
 		if self.debug:
 			print('In snareSurface()')
 		ret = {}
-		if self.token == False: # end of input
-			return self.NotFound
-			self.die('EOI')
 
 		# snare
 		# rR lL xX yY sS
@@ -556,9 +547,9 @@ rules = [
 	("simultaneousB", r"\)"),
 	
 	("space", r"[\t\n ]"),
-	("string", r"\"[a-zA-Z0-9 _-]+\"") # string
+	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string
 
-	#("timesignature", r"[1-9]/[1-9]")
+	#("timesignature", r"[1-9]/[1-9]"),
 	#("tempo", r"[1-9]+")
 ]
  
