@@ -1,6 +1,7 @@
 import sys
 from lexer import *
 from convertor import *
+import pickle
 
 # what i'd like is for each method to return a data structure
 # or empty if there were no matches
@@ -18,7 +19,8 @@ class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
-		self.debug = False #True
+		self.debug = True
+		self.debug2 = True
 
 	def die(self, message):
 		print(message)
@@ -26,7 +28,7 @@ class Parser:
 
 	def accept(self, a):
 		if self.token == a:
-			if self.debug:
+			if self.debug2:
 				print('Accept ' + self.token + ':' + self.value)
 			# self.next() might not have anymore input
 			self.next()
@@ -59,8 +61,8 @@ class Parser:
 
 	def score(self):
 		ret = {}
-		if self.token == 'detail':
-			a = self.details()
+		a = self.details()
+		if len(a):
 			ret.update(a)
 		a = self.instruments()
 		ret['instruments'] = a
@@ -85,11 +87,10 @@ class Parser:
 		if self.debug:
 			print('In instruments()')
 		ret = {}
-		while 1:
-			if self.token == False: # end of input
-				break
+		while self.token == 'instrument':
 			a = self.instrument()
-			if a == self.NotFound:
+
+			if len(a) == 0:
 				break
 			else:
 				ret.update(a)
@@ -101,9 +102,11 @@ class Parser:
 		ret = {}
 		
 		instrument = self.value.replace(':', '')
+
 		self.accept('instrument')
 		while self.token == 'space':
 			self.accept('space')
+		a = {}
 		if instrument == 'snare':
 			a = self.snareMusic()
 		if instrument == 'tenor':
@@ -145,6 +148,168 @@ class Parser:
 			return self.NotFound
 		return ret
 
+	def snareMeasure(self):
+		if self.debug:
+			print('In measure()')
+
+		# returns a measure structure
+		ret = {
+			'timeSignature': '4/4',
+			'beats': []
+		}
+		while 1:
+			a = self.snareBeat()
+			if len(a) == 0:
+				break
+			ret['beats'].append(a)
+			while self.token == 'space':
+				self.accept('space')
+
+		if len( ret['beats'] ) == 0:
+			return self.NotFound
+		return ret
+
+	def snareBeat(self):
+		if self.debug:
+			print('In beat()')
+		# returns an array of notes
+		ret = []
+		while 1:
+			# digest notes
+			a = self.snareNote()
+			if a == self.NotFound:
+				if self.debug:
+					print('NotFound from note()')
+				break
+			else:
+				ret.append(a)
+
+
+			# notes or modifiers
+			if ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token) == 0:
+				if self.debug:
+					print('Break from snareNotes()')
+				break
+
+		# are we at the sticking separator?
+		if self.token == 'startSticking':
+			self.accept('startSticking')
+			b = self.sticking()
+			# now annotate notes in ret with stickings we just got?
+			i = 0
+			for note in ret:
+				if type(note) == list:
+					pass
+				elif type(note) == dict:
+					if not 'rest' in note:
+						note['sticking'] = b[i]
+						#print(note['surface'])
+						i += 1
+			
+		return ret
+
+	def snareNote(self):
+		if self.debug:
+			print('In note()')
+		# returns a note structure
+		# this is just a sample of the structure, elements will not be present unless they have a value
+		ret = {
+			#'accent': False,
+			#'crescendo': False,
+			#'decrescendo': False,
+			#'diddle': False,
+			#'dynamic': False,
+			#'flam': False,
+			#'flamRest': False,
+			#'fours': False,
+			#'highAccent': False,
+			#'notes': [],
+			#'rest': False,
+			#'sticking': False,
+			'surface': False
+		}
+		
+		# flow control here by instrument, since they're all similar?
+		a = self.snareModifiers()
+		ret.update(a)
+		a = self.snareSurface()
+
+		if a == self.NotFound: # if no surface, probably an error
+			return self.NotFound
+			#self.die('Should have caught this error in surfaceNote()')
+		else:
+			ret.update(a)
+		return ret
+
+	def snareModifiers(self):
+		if self.debug:
+			print('In snareModifiers()')
+		ret = {}
+		
+		while 1:
+			a = self.snareModifier()
+			if a == self.NotFound: # no modifiers, or no more modifiers
+				break
+			ret.update(a)
+		return ret
+
+	def snareModifier(self):
+		if self.debug:
+			print('In snareModifier()')
+		ret = {}
+		if self.token == 'articulation':
+			if self.value == ',':
+				ret['flam'] = True
+			if self.value == '-':
+				ret['diddle'] = True
+			if self.value == '=':
+				ret['fours'] = True
+			self.accept('articulation')
+			return ret
+
+		elif self.token == 'dynamic':
+			return self.dynamicModifier()
+
+		else:
+			if self.debug:
+				print('No modifier or no more')
+			return self.NotFound
+
+	def snareSurface(self):
+		if self.debug:
+			print('In snareSurface()')
+		ret = {}
+		if self.token == False: # end of input
+			return self.NotFound
+			self.die('EOI')
+
+		# snare
+		# rR lL xX yY sS
+		if self.token == 'rest': #rest
+			ret['rest'] = True
+			self.accept('rest')
+			return ret
+
+		elif re.search(self.value, "HXRBSG"):
+			# why would value='.' be matched here?
+			ret['accent'] = True
+			ret['surface'] = self.value.lower()
+			self.accept('snareSurface')
+			return ret
+
+		elif re.search(self.value, "hxrbsg"):
+			ret['surface'] = self.value
+			self.accept('snareSurface')
+			return ret
+			
+		else: # should only get here if there's an error
+			return self.NotFound
+			#self.die('Expected a note surface')
+
+
+
+# bass and tenor methods
+
 	def bassTenorMusic(self):
 		if self.debug:
 			print('In music()')
@@ -173,28 +338,6 @@ class Parser:
 			return self.NotFound
 		return ret
 
-	# measure()
-	def snareMeasure(self):
-		if self.debug:
-			print('In measure()')
-
-		# returns a measure structure
-		ret = {
-			'timeSignature': '4/4',
-			'beats': []
-		}
-		while 1:
-			a = self.snareBeat()
-			if len(a) == 0:
-				break
-			ret['beats'].append(a)
-			while self.token == 'space':
-				self.accept('space')
-
-		if len( ret['beats'] ) == 0:
-			return self.NotFound
-		return ret
-	
 	def bassTenorMeasure(self):
 		if self.debug:
 			print('In measure()')
@@ -214,38 +357,6 @@ class Parser:
 
 		if len( ret['beats'] ) == 0:
 			return self.NotFound
-		return ret
-
-	# beat()
-	def snareBeat(self):
-		if self.debug:
-			print('In beat()')
-		# returns an array of notes
-		ret = []
-		while 1:
-			if self.token == 'simultaneousA': # simultaneous
-				self.accept('simultaneousA')
-				a = self.simultaneousNotes()
-				if a == self.NotFound:
-					self.die('Should not be here')
-					break
-				else:
-					ret.append(a)
-				self.expect('simultaneousB')
-
-			else:
-				a = self.snareNote()
-				if a == self.NotFound:
-					if self.debug:
-						print('NotFound from note()')
-					break
-				else:
-					ret.append(a)
-				# notes or modifiers
-				if ['articulation','dynamic','noteSurface','sticking'].count(self.token) == 0:
-					if self.debug:
-						print('Break from beat()')
-					break
 		return ret
 
 	def bassTenorBeat(self):
@@ -298,40 +409,6 @@ class Parser:
 				break
 		return ret
 
-	# note()
-	def snareNote(self):
-		if self.debug:
-			print('In note()')
-		# returns a note structure
-		# this is just a sample of the structure, elements will not be present unless they have a value
-		ret = {
-			#'accent': False,
-			#'crescendo': False,
-			#'decrescendo': False,
-			#'diddle': False,
-			#'dynamic': False,
-			#'flam': False,
-			#'flamRest': False,
-			#'fours': False,
-			#'highAccent': False,
-			#'notes': [],
-			#'rest': False,
-			#'sticking': False,
-			'surface': False
-		}
-		
-		# flow control here by instrument, since they're all similar?
-		a = self.snareModifiers()
-		ret.update(a)
-		a = self.snareSurface()
-
-		if a == self.NotFound: # if no surface, probably an error
-			return self.NotFound
-			#self.die('Should have caught this error in surfaceNote()')
-		else:
-			ret.update(a)
-		return ret
-	
 	def bassTenorNote(self):
 		if self.debug:
 			print('In note()')
@@ -365,19 +442,6 @@ class Parser:
 			ret.update(a)
 		return ret
 
-	# modifiers()
-	def snareModifiers(self):
-		if self.debug:
-			print('In snareModifiers()')
-		ret = {}
-		
-		while 1:
-			a = self.snareModifier()
-			if a == self.NotFound: # no modifiers, or no more modifiers
-				break
-			ret.update(a)
-		return ret
-
 	def bassTenorModifiers(self):
 		if self.debug:
 			print('In bassTenorModifiers()')
@@ -389,29 +453,6 @@ class Parser:
 				break
 			ret.update(a)
 		return ret
-
-	# modifier()
-	def snareModifier(self):
-		if self.debug:
-			print('In snareModifier()')
-		ret = {}
-		if self.token == 'articulation':
-			if self.value == ',':
-				ret['flam'] = True
-			if self.value == '-':
-				ret['diddle'] = True
-			if self.value == '=':
-				ret['fours'] = True
-			self.accept('articulation')
-			return ret
-
-		elif self.token == 'dynamic':
-			return self.dynamicModifer()
-
-		else:
-			if self.debug:
-				print('No modifier or no more')
-			return self.NotFound
 
 	def bassTenorModifier(self):
 		if self.debug:
@@ -442,47 +483,6 @@ class Parser:
 				print('No modifier or no more')
 			return self.NotFound
 
-	def dynamicModifier(self):
-		if self.token == 'dynamic':
-			if self.value == 'P':
-				ret['dynamic'] = 'P'
-			if self.value == 'M':
-				ret['dynamic'] = 'M'
-			if self.value == 'F':
-				ret['dynamic'] = 'F'
-			if self.value == '<':
-				ret['crescendo'] = True
-			if self.value == '>':
-				ret['decrescendo'] = True
-			self.accept('dynamic')
-			return ret
-
-	# noteSurface()
-	def snareSurface(self):
-		if self.debug:
-			print('In snareSurface()')
-		ret = {}
-		if self.token == False: # end of input
-			return self.NotFound
-			self.die('EOI')
-
-		# snare
-		# rR lL xX yY sS
-		if self.value == '.': #rest
-			ret['rest'] = True
-		elif re.search(self.value, "RLXYS"):
-			# why would value='.' be matched here?
-			ret['accent'] = True
-			ret['surface'] = self.value.lower()
-		elif re.search(self.value, "rlxys"):
-			ret['surface'] = self.value
-			
-		if self.accept('snareSurface'):
-			return ret
-		else: # should only get here if there's an error
-			return self.NotFound
-			#self.die('Expected a note surface')
-
 	def bassTenorSurface(self):
 		if self.debug:
 			print('In bassTenorSurface()')
@@ -506,6 +506,32 @@ class Parser:
 			return self.NotFound
 
 
+	def sticking(self):
+		ret = []
+		while self.token == 'sticking' or self.token == 'rest':
+			a = self.token
+			if a == 'rest':
+				self.accept('rest')
+			if a == 'sticking':
+				ret.append(self.value)
+				self.accept('sticking')
+		return ret
+				
+	def dynamicModifier(self):
+		ret = {}
+		if self.token == 'dynamic':
+			if self.value == 'P':
+				ret['dynamic'] = 'P'
+			if self.value == 'M':
+				ret['dynamic'] = 'M'
+			if self.value == 'F':
+				ret['dynamic'] = 'F'
+			if self.value == '<':
+				ret['crescendo'] = True
+			if self.value == '>':
+				ret['decrescendo'] = True
+			self.accept('dynamic')
+			return ret
 
  
 rules = [
@@ -515,22 +541,21 @@ rules = [
 	("instrument", r"(snare|bass|tenor|cymbal):"),
 
 	#modifiers
+	("startSticking", ":"),
 	("dynamic", r"[<>PMF]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=-]"),
 
-	("noteSurface", r"[hHxXaAbBcCdDeEuU.]"),
-	("bassTenorNote", r"[hHxXaAbBcCdDeEuU.]"),
-	("snareNote", r"[rRlLxX.]"),
+	("snareSurface", r"[hHxX]"),
+	("bassTenorNote", r"[aAbBcCdDeEuU]"),
+	("rest", r"[.]"),
 
 	("pipe", r"\|"),
 
-	#("drum", r"[1-6]{1}"),
 	("simultaneousA", r"\("),
 	("simultaneousB", r"\)"),
 	
 	("space", r"[\t\n ]"),
-	#("line", r"\r|\n"), 
 	("string", r"\"[a-zA-Z0-9 _-]+\"") # string
 
 	#("timesignature", r"[1-9]/[1-9]")
@@ -565,9 +590,9 @@ tokens = lex.scan(text)
 
 parser = Parser(tokens)
 a = parser.score()
-#print( repr(a) )
+#print pickle.dumps(a)
+print( repr(a) )
 
-convertor = Convertor()
-b = convertor.toLilypond(a, settings)
-
-print( b )
+#convertor = LilypondConvertor()
+#b = convertor.convert(a, settings)
+#print( b )

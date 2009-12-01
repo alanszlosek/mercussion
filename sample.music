@@ -5,53 +5,12 @@ tempo: 140
 
 snare:
 	(4/4)
-	F,hh,hh -h-hxh hhrhrhH.h. x
-
-WHAT IF, put in r/l for surface? and within a beat, emits sticking when notes stray from alternating pattern?
-- but how do shots?
-	x - right shot
-	z - left shot?
-- for snare it can be super terse, but it's impossible for other drums ... so much more to capture
-
 	F,rr,ll -r-lxl rlrrl.r. z
 
 tenor:
-	F,baa,abb -a-bcd
-	arblarr
-
-	{rlrr}alb. // need to back-modify the tree, ugh.
+	F,baa,abb -a-bcd {rlrr}ab.c. // need to back-modify the tree, ugh.
+	aaaab.c.#rlrrl.r.
+	arblarr 
 
 bass:
 	Faabb
-
-----
-NOTES
-
-snare
-
-----
-
-music = [
-	// measure
-	{
-		timeSignature: '4/4',
-		beats: [
-			# beat 1
-			[
-				# note 1
-				{
-					'accent': False,
-					'diddle': False,
-					'flam': False,
-					'fours': False,
-					'highAccent': False,
-					'notes': [],
-					'rest': False,
-					'simultaneous': False,
-					'sticking': False,
-					'surface': False
-				}
-			]
-		]
-	}
-]

@@ -2,6 +2,9 @@ class Convertor:
 	def __init__(self):
 		i = 0
 
+	# lilypond specific
+	# inserts flam spacers in the rest of the score
+	# fucking hate that i have to do this
 	def flams(self, parsed):
 		instruments = parsed['instruments'].keys()
 		measure = 0
@@ -149,7 +152,22 @@ class Convertor:
 
 		return parsed
 
-	def toLilypond(self, parsed, settings={}):
+
+
+	def accentFrom(self, dynamic):
+                if dynamic == 'P':
+                        return 'M'
+                elif dynamic == 'M':
+                        return 'F'
+                elif dynamic == 'F':
+                        return 'G'
+                elif dynamic == 'G':
+                        return 'G'
+
+
+
+class LilypondConvertor(Convertor):
+	def convert(self, parsed, settings={}):
 		#a = self.flams(parsed)
 		#return ''
 		a = self.condense(parsed)
@@ -373,14 +391,3 @@ class Convertor:
 		ret += '\t}\n'
 		ret += '}\n'
 		return ret
-
-	def accentFrom(self, dynamic):
-                if dynamic == 'P':
-                        return 'M'
-                elif dynamic == 'M':
-                        return 'F'
-                elif dynamic == 'F':
-                        return 'G'
-                elif dynamic == 'G':
-                        return 'G'
-

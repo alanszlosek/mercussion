@@ -1,6 +1,23 @@
+- make sure: [abc][abc]r (triplet) works with lilypond output
+- so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
+
+- ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
+	- if i do my own midi output, this might be quite easy to do
+
+- flags for which instruments to output (instead of all by default)
+	- like this: --instrument snare,tenor
+
 - flag for whether to expand tremolos, etc
+	- needed for lilypond's midi output
+
+- interbeat tuplets
+	- arg.
+	- what if we simply set a flag when we hit '[': startsTuplet
+	- we'd have to go back one note to decorate a note with endsTuplet when we hit ']'
+
 - sub-beat tuplets
 	- 16 16 (16 16 16)
+
 - when compiling for midi output
 	- add tap-off measure
 	- expand tremolos
@@ -24,6 +41,9 @@
 
 - annotate measures with timeSignature if one wasn't parsed
 	- use beats in measure over 4 as default
+
+- no more passing filenames ... read input as if from keyboard and print output
+	- so on unix or windows one should use input/output redirection
 
 Done:
 

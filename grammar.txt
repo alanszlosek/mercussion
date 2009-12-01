@@ -15,8 +15,12 @@ snareMusic: snareMeasure "|" snareMusic | snareMeasure
 snareMeasure: snareBeat space* snareMeasure | snareBeat
 
 // can put in simultaneous here when need to for cymbal stuff
-snareBeat: '[' snareBeat2 '] snareBeat | snareNote snareBeat | snareNote |
-snareBeat2: snareNote snareBeat2 | snareNote
+// how deal with simultaneous and sticking?
+snareBeat: snareNotes ':' sticking | snareNotes
+snareNotes: snareNote snareNotes | snareNote
+
+// fuck tuplets for now
+// snareBeat2: ']' snareBeat | ']' | snareNote snareBeat2 | snareNote
 
 snareNote: snareModifers snareSurface | snareSurface
 
@@ -24,7 +28,7 @@ snareModifiers: snareModifier snareModifiers | snareModifier
 
 snareModifier: dynamicModifier | [,-=]
 
-snareSurface: [rRlLxXyYsS] | '.'
+snareSurface: [hHxXrRbBsSgG] | rest
 
 
 // bass and tenors
@@ -33,7 +37,8 @@ bassTenorMusic: bassTenorMeasure "|" bassTenorMusic | bassTenorMeasure
 bassTenorMeasure: bassTenorBeat space* bassTenorMeasure | bassTenorBeat
 
 // gar ... get the combos right is a bitch
-bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "[" bassTenorBeat2 "]" bassTenorBeat | "{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
+bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "[" bassTenorBeat2 "]" bassTenorBeat |
+	"{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
 bassTenorBeat2: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
 
 bassTenorSimultaneousNotes: bassTenorNote bassTenorSimultaneousNotes | bassTenorNote
@@ -50,6 +55,10 @@ bassTenorSurface: [aAbBcCdDeEuU] | '.'
 
 
 dynamicModifier: [PMFG<>]
+
+stickingModifier: [rl]
+
+rest: '.'
 
 
 tuplet_begin: "["
