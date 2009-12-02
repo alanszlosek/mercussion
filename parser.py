@@ -20,7 +20,7 @@ class Parser:
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
 		self.debug = False
-		self.debug2 = False
+		self.debug2 = True
 
 	def die(self, message):
 		print(message)
@@ -68,6 +68,7 @@ class Parser:
 		ret['instruments'] = a
 		if self.debug:
 			print( repr(ret) )
+
 		return ret
 
 	def details(self):
@@ -122,11 +123,13 @@ class Parser:
 	# music()	
 	def snareMusic(self):
 		if self.debug:
-			print('In music()')
+			print('In snareMusic()')
 		# returns an array of measures
 		ret = []
 
 		while 1:
+			#a = self.timeSignature()
+
 			a = self.snareMeasure()
 
 			if a != self.NotFound:
@@ -171,7 +174,7 @@ class Parser:
 
 	def snareBeat(self):
 		if self.debug:
-			print('In beat()')
+			print('In snareBeat()')
 		# returns an array of notes
 		ret = []
 		while ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token):
@@ -179,7 +182,7 @@ class Parser:
 			a = self.snareNote()
 			if a == self.NotFound:
 				if self.debug:
-					print('NotFound from note()')
+					print('NotFound from snareNote()')
 				break
 			else:
 				ret.append(a)
@@ -204,15 +207,15 @@ class Parser:
 
 	def snareNote(self):
 		if self.debug:
-			print('In note()')
+			print('In snareNote()')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
 			#'accent': False,
-			#'crescendo': False,
-			#'decrescendo': False,
 			#'diddle': False,
 			#'dynamic': False,
+			#'dynamicChange': '>' or '<'
+			#'dynamicChangeEnd': False,
 			#'flam': False,
 			#'flamRest': False,
 			#'fours': False,
@@ -223,7 +226,6 @@ class Parser:
 			#'surface': False
 		}
 		
-		# flow control here by instrument, since they're all similar?
 		a = self.snareModifiers()
 		ret.update(a)
 		a = self.snareSurface()
@@ -295,7 +297,6 @@ class Parser:
 			
 		else: # should only get here if there's an error
 			return self.NotFound
-			#self.die('Expected a note surface')
 
 
 
@@ -303,7 +304,7 @@ class Parser:
 
 	def bassTenorMusic(self):
 		if self.debug:
-			print('In music()')
+			print('In bassTenorMusic()')
 		# returns an array of measures
 		ret = []
 
@@ -314,8 +315,7 @@ class Parser:
 				ret.append(a)
 			else:
 				break
-			#print(self.token)
-			#sys.exit()
+
 			while self.token == 'space':
 				self.accept('space')
 			if self.token != 'pipe':
@@ -355,7 +355,8 @@ class Parser:
 			print('In bassTenorBeat()')
 		# returns an array of notes
 		ret = []
-		while 1:
+		# need to add simultaneous and other tokens
+		while ['articulation','dynamic','rest','bassTenorSurface','sticking'].count(self.token):
 			if self.token == 'simultaneousA': # simultaneous
 				self.accept('simultaneousA')
 				a = self.simultaneousNotes()
@@ -370,15 +371,28 @@ class Parser:
 				a = self.bassTenorNote()
 				if a == self.NotFound:
 					if self.debug:
-						print('NotFound from note()')
+						print('NotFound from bassTenorNote()')
 					break
 				else:
 					ret.append(a)
-				# notes or modifiers
-				if ['articulation','dynamic','noteSurface','sticking'].count(self.token) == 0:
-					if self.debug:
-						print('Break from beat()')
-					break
+
+		# are we at the sticking separator?
+		if self.token == 'startSticking':
+			self.accept('startSticking')
+			b = self.sticking()
+			# now annotate notes in ret with stickings we just got?
+			i = 0
+			# should loop over sticking array instead
+			for note in ret:
+				if type(note) == list:
+					# copy to each note in simultaneous list
+					pass
+				elif type(note) == dict:
+					if not 'rest' in note:
+						#note['sticking'] = b[i]
+						#print(note['surface'])
+						i += 1
+
 		return ret
 
 	# just like beat(), but without the parenthesis grouping
@@ -402,13 +416,14 @@ class Parser:
 
 	def bassTenorNote(self):
 		if self.debug:
-			print('In note()')
+			print('In bassTenorNote()')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
 			#'accent': False,
 			#'crescendo': False,
 			#'decrescendo': False,
+			#'stop
 			#'diddle': False,
 			#'dynamic': False,
 			#'flam': False,
@@ -418,10 +433,9 @@ class Parser:
 			#'notes': [],
 			#'rest': False,
 			#'sticking': False,
-			'surface': False
+			#'surface': False
 		}
 		
-		# flow control here by instrument, since they're all similar?
 		a = self.bassTenorModifiers()
 		ret.update(a)
 		a = self.bassTenorSurface()
@@ -460,15 +474,8 @@ class Parser:
 			return ret
 
 		elif self.token == 'dynamic':
-			return self.dynamicModifer()
+			return self.dynamicModifier()
 
-		elif self.token == 'sticking':
-			if self.value == 'l':
-				ret['sticking'] = 'l'
-			if self.value == 'r':
-				ret['sticking'] = 'r'
-			self.accept('sticking')
-			return ret
 		else:
 			if self.debug:
 				print('No modifier or no more')
@@ -478,21 +485,24 @@ class Parser:
 		if self.debug:
 			print('In bassTenorSurface()')
 		ret = {}
-		if self.token == False: # end of input
-			return self.NotFound
-			self.die('EOI')
 
 		# bass tenor
-		if self.value == '.': #rest
+		if self.token == 'rest': #rest
 			ret['rest'] = True
+			self.accept('rest')
+			return ret
+
 		elif re.search(self.value, "ABCDEFU"):
 			ret['accent'] = True
 			ret['surface'] = self.value.lower()
+			self.accept('bassTenorSurface')
+			return ret
+
 		elif re.search(self.value, "abcdefu"):
 			ret['surface'] = self.value
-			
-		if self.accept('bassTenorSurface'):
+			self.accept('bassTenorSurface')
 			return ret
+			
 		else: # should only get here if there's an error
 			return self.NotFound
 
@@ -518,9 +528,9 @@ class Parser:
 			if self.value == 'F':
 				ret['dynamic'] = 'F'
 			if self.value == '<':
-				ret['crescendo'] = True
+				ret['dynamicChange'] = '<'
 			if self.value == '>':
-				ret['decrescendo'] = True
+				ret['dynamicChange'] = '>'
 			self.accept('dynamic')
 			return ret
 
@@ -538,7 +548,8 @@ rules = [
 	("articulation", r"[,=-]"),
 
 	("snareSurface", r"[hHxX]"),
-	("bassTenorNote", r"[aAbBcCdDeEuU]"),
+	("bassTenorSurface", r"[aAbBcCdDeEuU]"),
+	("tenorSurface", r"[aAbBcCdDeE]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
@@ -549,7 +560,7 @@ rules = [
 	("space", r"[\t\n ]"),
 	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string
 
-	#("timesignature", r"[1-9]/[1-9]"),
+	#("timesignature", r"[1-9]/[1-9]")
 	#("tempo", r"[1-9]+")
 ]
  
@@ -581,7 +592,12 @@ tokens = lex.scan(text)
 
 parser = Parser(tokens)
 a = parser.score()
-#print pickle.dumps(a)
+
+# finalizes and annotates the intermediate data structure
+conv = Convertor()
+a = conv.condense(a)
+
+# i'd rather pass repr() output to Convertor classes than pickle output (repr is human-readable)
 print( repr(a) )
 
 #convertor = LilypondConvertor()

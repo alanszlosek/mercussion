@@ -1,4 +1,5 @@
 - make sure: [abc][abc]r (triplet) works with lilypond output
+
 - so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon

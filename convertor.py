@@ -71,9 +71,12 @@ class Convertor:
 
 		# expand unison surface into simultaneous based on number of basses?
 
+		# if timeSignature per measure is not specified, deduce into x/4
+
 		# annotate with durations
 		for (instrument,music) in parsed['instruments'].items():
-			dynamic = ''
+			dynamic = False 
+			dynamicChange = False
 			for measure in music:
 				for beat in measure['beats']:
 					# fix tenor flams
@@ -132,38 +135,23 @@ class Convertor:
 								
 				
 						i += 2
+					# end condense rests
 
-					# set dynamics on accents and next note
+					# set dynamicChangeEnd
 					for note in beat:
-						if type(note) == dict:
-							if 'dynamic' in note:
-								dynamic = note['dynamic']
-							elif 'accent' in note:
-								if dynamic:
-									note['dynamic'] = self.accentFrom(dynamic)
-								else: # default to mf
-									note['dynamic'] = self.accentFrom('M')
-									dynamic = 'M'
-							elif dynamic:
-								note['dynamic'] = dynamic
-								dynamic = ''
-								
+						if type(note) == list:
+							for simultaneous in note:
+								simultaneous['duration'] = duration
+								#print(simultaneous['surface'])
+						elif type(note) == dict:
+							if dynamicChange and 'dynamic' in note:
+								note['dynamicChangeEnd'] = True
+								dynamicChange = False
+							if 'dynamicChange' in note:
+								dynamicChange = True
 						
 
 		return parsed
-
-
-
-	def accentFrom(self, dynamic):
-                if dynamic == 'P':
-                        return 'M'
-                elif dynamic == 'M':
-                        return 'F'
-                elif dynamic == 'F':
-                        return 'G'
-                elif dynamic == 'G':
-                        return 'G'
-
 
 
 class LilypondConvertor(Convertor):

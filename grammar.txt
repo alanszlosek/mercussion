@@ -2,7 +2,7 @@ score: details instruments | instruments
 
 details: detail string details
 
-detail: "author:" | "tempo:" | "timesignature:" | "title:"
+detail: "author:" | "tempo:" | "timesignature:" | "title:" 
 
 instruments: instrument instruments | instrument
 
@@ -10,17 +10,13 @@ instrument: "snare:" snareMusic | "bass:" bassTenorMusic | "tenor:" bassTenorMus
 
 
 // snare
-snareMusic: snareMeasure "|" snareMusic | snareMeasure
+snareMusic: snareMeasure "|" snareMusic |  snareMeasure
 
 snareMeasure: snareBeat space* snareMeasure | snareBeat
 
-// can put in simultaneous here when need to for cymbal stuff
-// how deal with simultaneous and sticking?
 snareBeat: snareNotes ':' sticking | snareNotes
-snareNotes: snareNote snareNotes | snareNote
 
-// fuck tuplets for now
-// snareBeat2: ']' snareBeat | ']' | snareNote snareBeat2 | snareNote
+snareNotes: snareNote snareNotes | snareNote
 
 snareNote: snareModifers snareSurface | snareSurface
 
@@ -36,14 +32,11 @@ bassTenorMusic: bassTenorMeasure "|" bassTenorMusic | bassTenorMeasure
 
 bassTenorMeasure: bassTenorBeat space* bassTenorMeasure | bassTenorBeat
 
-// gar ... get the combos right is a bitch
-bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "[" bassTenorBeat2 "]" bassTenorBeat |
-	"{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
-bassTenorBeat2: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "{" bassTenorSticking "}" bassTenorSurface more? | bassTenorNote bassTenorBeat | bassTenorNote
+bassTenorBeat: bassTenorNotes ':' sticking | bassTenorNotes
 
 bassTenorSimultaneousNotes: bassTenorNote bassTenorSimultaneousNotes | bassTenorNote
 
-bassTenorSticking: [rl] bassTenorSticking | [rl]
+bassTenorNotes: bassTenorNote bassTenorNotes | bassTenorNote
 
 bassTenorNote: bassTenorModifers bassTenorSurface | bassTenorSurface
 
@@ -51,7 +44,16 @@ bassTenorModifiers: bassTenorModifier bassTenorModifiers | bassTenorModifier
 
 bassTenorModifier: dynamicModifier | [,-=*]
 
-bassTenorSurface: [aAbBcCdDeEuU] | '.'
+bassTenorSurface: [aAbBcCdDeEuU] | rest
+
+
+
+// gar ... get the combos right is a bitch
+bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "[" bassTenorBeat2 "]" bassTenorBeat |
+	bassTenorNote bassTenorBeat | bassTenorNote
+bassTenorBeat2: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | bassTenorNote bassTenorBeat | bassTenorNote
+
+
 
 
 dynamicModifier: [PMFG<>]
