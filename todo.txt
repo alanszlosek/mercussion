@@ -54,6 +54,7 @@
 	BPM = MICROSECONDS_PER_MINUTE / MPQN
 	MPQN = MICROSECONDS_PER_MINUTE / BPM
 
+	128 velocity is max volume
 
 Done:
 

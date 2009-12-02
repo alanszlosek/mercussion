@@ -699,7 +699,7 @@ class Parser:
  
 rules = [
 	# details
-	("detail", r"(author|tempo|timesignature|title):"),
+	("detail", r"(author|tempo|timesignature|title|subtitle):"),
 	# instruments
 	("instrument", r"(snare|bass|tenor|cymbal):"),
 
