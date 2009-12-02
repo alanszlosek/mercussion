@@ -34,6 +34,15 @@ class Convertor:
 								z -= 1
 							else: # only advance if we didn't just delete a beat
 								i += 1
+					# end tenor-specific
+
+					# convert bass unisons to simultaneous notes
+					if instrument == 'bass':
+						for note in beat:
+							if 'surface' in note and note['surface'] == 'u':
+								# how many basses should we expand to?
+								note['surface'] = 'abcde'
+					# end bass-specific
 
 					notes = len(beat)
 					tuple = False
@@ -82,7 +91,75 @@ class Convertor:
 		return parsed
 
 class MidiConvertor(Convertor):
-	pass
+	def saveTo(self, score, file):
+		instrumentMap = {
+			"snare": "2",
+			"tenor": "1",
+			"bass": "0",
+			"cymbal": "3"
+		}
+		volumeMap = {
+			"snare": "127",
+			"tenor": "127",
+			"bass": "127",
+			"cymbal": "127"
+		}
+		snareMap = {
+			"h": "72"
+		}
+		bassTenorMap = {
+			# these aren't right
+			"a": "76",
+			"b": "72",
+			"c": "72",
+			"d": "72",
+			"e": "72"
+		}
+		cymbalMap = {
+		}
+
+		out = open(file, "w+")	
+		# MFile format tracks division
+		out.write("MFile 1 " + str(len(score['instruments'])) + " ?\n")
+		# tempo track
+		out.write("MTrk\n")
+		out.write("000:00:000 Tempo 500000\n")
+		out.write("000:00:000 TimeSig 4/4 32 99\n")
+		out.write("TrkEnd\n")
+
+		# set counter a second into the future for blank space padding
+
+		channel = 1
+		startingCounter = 30 # calculate how much time would yield a second
+		flamPosition = -20 # calculate based on tempo
+		for (instrument,music) in score['instruments'].items():
+                        dynamic = False
+                        dynamicChange = False
+			counter = startingCounter
+
+			channelString = str(channel)
+	
+			out.write("Trk\n")
+			# map instrument to a channel
+			out.write("PrCh ch=" + channelString + " p=" + instrumentMap[instrument] + "\n")
+			# set main track volume
+			out.write("Par ch=" + channelString + " c=7 p=" + volumeMap[instrument] + "\n")
+			# could set panning here too!
+
+                        for measure in music:
+                                for beat in measure['beats']:
+					for note in beat:
+						if 'flam' in note:
+							#go back a bit, from current counter value
+							pass
+				# end beat loop
+			# end measure loop
+			out.write("EndTrk\n")
+
+			channel += 1
+		# end instrument loop
+		out.close()
+		return True
 
 class LilypondConvertor(Convertor):
 	# lilypond specific
