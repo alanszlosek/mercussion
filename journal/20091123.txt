@@ -1,0 +1,83 @@
+As we know, I want the notation to be as terse as possible, while still making sense. Today I realized a better way to specify sticking. But first, a recap of where I am today.
+
+For snare, in the simplest case, the surface and the sticking can be specified by the same letter. r and l would represent hitting the snare head with the right and left hand. But this breaks down when you want to signify a left-hand rim shot or rim click.
+
+snare: F,rr,ll -r-lxl rlrrl.r. z
+
+The x is a right-hand shot. y would be a left-hand rim shot.
+
+For tenors, this doesn't work because one also has to specify which drum, head/rim/shot, which hand and whether there's an accent. Lots of information. The accent can be taken care of with an uppercase drum specifier. a would be non-accented hit on the first drum, A would be an accented hit. Sometimes there's lots of sticking to specify, like a paradiddle on drum 2, specified with the following:
+
+{rlrr}b
+
+But this introduces two more characters, and can be confusing when there's lots of drum switching AND abnormal sticking. So I need something better.
+
+How about this?
+
+Specify the surface and accents for a given beat first, then specify the sticking.
+
+aaaa:rlrr
+
+That would be a paradiddle on the first tenor drum. The same would work for snare.
+
+-h-hXh rrr.:rrr
+
+GLOBAL MODIFIERS
+~ buzz
+- diddle
+= four
+, flam (on snare, next note isn't a grace)
+* rim shot (tenors only)
+
+SNARE
+Surfaces
+	h - Head
+	x - Shot
+	r - Rim
+	b - Backstick on head
+	sc - Stick click
+	g - ghost
+
+Accent
+	Uppercase version of one of the above
+
+Flam
+	, before note that should be flammed
+
+Sticking
+	AFTER the surface section, starts with a colon.
+	hhhh:rllr
+
+
+TENOR
+Drum
+	abcd12
+	OR
+	abcdef
+	ABCDEF
+
+Flam
+	,bAbc. abcdd...
+
+Shots
+	*abc.
+
+
+CYMBAL
+Crash
+	c for crash
+Choke (stop)
+	r for rest
+Chick
+	h for hi-hat
+Tap
+	t
+Slide-choke (fusion?)
+	s f
+
+
+ALL
+Diddle
+	-
+Four
+	=

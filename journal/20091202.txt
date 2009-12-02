@@ -1,0 +1,14 @@
+indispensable http://home.roadrunner.com/~jgglatt/tech/midifile.htm
+
+MIDI output formulas
+
+MICROSECONDS_PER_MINUTE = 60000000
+BPM = MICROSECONDS_PER_MINUTE / MPQN
+MPQN = MICROSECONDS_PER_MINUTE / BPM
+
+128 velocity is max volume
+
+BPM = 120
+
+Tempo = length of quarter notes = 60000000 / BPM
+Division = click per quarter note 
