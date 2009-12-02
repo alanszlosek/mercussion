@@ -6,7 +6,7 @@ detail: "author:" | "tempo:" | "timesignature:" | "title:"
 
 instruments: instrument instruments | instrument
 
-instrument: "snare:" snareMusic | "bass:" bassTenorMusic | "tenor:" bassTenorMusic | "cymbal:" cymbalMusic
+instrument: "bass:" bassMusic | "cymbal:" cymbalMusic | "snare:" snareMusic | "tenor:" tenorMusic
 
 
 // snare
@@ -27,32 +27,46 @@ snareModifier: dynamicModifier | [,-=]
 snareSurface: [hHxXrRbBsSgG] | rest
 
 
-// bass and tenors
-bassTenorMusic: bassTenorMeasure "|" bassTenorMusic | bassTenorMeasure
+// tenor
+tenorMusic: tenorMeasure "|" tenorMusic | tenorMeasure
 
-bassTenorMeasure: bassTenorBeat space* bassTenorMeasure | bassTenorBeat
+tenorMeasure: tenorBeat space* tenorMeasure | tenorBeat
 
-bassTenorBeat: bassTenorNotes ':' sticking | bassTenorNotes
+tenorBeat: tenorNotes ':' sticking | tenorNotes
 
-bassTenorSimultaneousNotes: bassTenorNote bassTenorSimultaneousNotes | bassTenorNote
+tenorSimultaneousNotes: tenorNote tenorSimultaneousNotes | tenorNote
 
-bassTenorNotes: bassTenorNote bassTenorNotes | bassTenorNote
+tenorNotes: tenorNote tenorNotes | tenorNote
 
-bassTenorNote: bassTenorModifers bassTenorSurface | bassTenorSurface
+tenorNote: tenorModifers tenorSurface | tenorSurface
 
-bassTenorModifiers: bassTenorModifier bassTenorModifiers | bassTenorModifier
+tenorModifiers: tenorModifier tenorModifiers | tenorModifier
 
-bassTenorModifier: dynamicModifier | [,-=*]
+tenorModifier: dynamicModifier | [,-=*]
 
-bassTenorSurface: [aAbBcCdDeEuU] | rest
+tenorSurface: [aAbBcCdDeEuU] | rest
 
 
+// bass
+bassMusic: bassMeasure "|" bassMusic | bassMeasure
 
-// gar ... get the combos right is a bitch
-bassTenorBeat: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | "[" bassTenorBeat2 "]" bassTenorBeat |
-	bassTenorNote bassTenorBeat | bassTenorNote
-bassTenorBeat2: "(" bassTenorSimultaneousNotes ")" bassTenorBeat | bassTenorNote bassTenorBeat | bassTenorNote
+bassMeasure: bassBeat space* bassMeasure | bassBeat
 
+bassBeat: bassNotes ':' sticking | bassNotes
+
+bassSimultaneousNotes: bassNote bassSimultaneousNotes | bassNote
+
+bassNotes: bassNote bassNotes | bassNote
+
+bassNote: bassModifers bassSurface | bassSurface
+
+bassModifiers: bassModifier bassModifiers | bassModifier
+
+bassModifier: dynamicModifier | [,-=*]
+
+bassSurface: "[" bassSurface2* "]" | bassSurface2 | rest
+
+bassSurface2: [aAbBcCdDeEuU]
 
 
 

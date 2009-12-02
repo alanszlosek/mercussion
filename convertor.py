@@ -1,7 +1,90 @@
 class Convertor:
-	def __init__(self):
-		i = 0
+	def condense(self, parsed):
+		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
 
+		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
+		# 32 32 32 32rest 32 32 32 32
+		# should become
+		# 32 32 16 32 32 32 32
+
+		# for tenors, merge flam notes together
+
+		# expand unison surface into simultaneous based on number of basses?
+
+		# if timeSignature per measure is not specified, deduce into x/4
+
+		# annotate with durations
+		for (instrument,music) in parsed['instruments'].items():
+			dynamic = False 
+			dynamicChange = False
+			for measure in music:
+				for beat in measure['beats']:
+					# fix tenor flams
+					if instrument == 'tenor':
+						i = 0
+						z = len(beat)
+						# the note with the flam flag will have the modifiers we want
+						while i < z: # for each note in the beat
+							note = beat[i]
+							if 'flam' in note and note['flam'] == True:
+								note['flam'] = note['surface']
+								note['surface'] = beat[ i+1 ]['surface']
+								#print('del' + str(i+1))
+								del beat[i+1]
+								z -= 1
+							else: # only advance if we didn't just delete a beat
+								i += 1
+
+					notes = len(beat)
+					tuple = False
+					if notes == 6 or notes == 5:
+						duration = 16
+						tuple = True
+					elif notes == 3:
+						duration = 8
+						tuple = True
+					else:
+						duration = 4 * notes
+
+					# annotate with durations
+					for note in beat:
+						note['duration'] = duration
+
+					# condense rests
+					i = 0
+					z = len(beat)
+					while i < z:
+						j = i + 1
+						if not j < z:
+							i += 2
+							continue
+						a = beat[i]
+						b = beat[j]
+						if 'rest' in b:
+							if type(a) == dict:
+								a['duration'] /= 2
+								del beat[j]
+								i -= 1
+								z -= 1
+				
+						i += 2
+					# end condense rests
+
+					# set dynamicChangeEnd
+					for note in beat:
+						if dynamicChange and 'dynamic' in note:
+							note['dynamicChangeEnd'] = True
+							dynamicChange = False
+						if 'dynamicChange' in note:
+							dynamicChange = True
+						
+
+		return parsed
+
+class MidiConvertor(Convertor):
+	pass
+
+class LilypondConvertor(Convertor):
 	# lilypond specific
 	# inserts flam spacers in the rest of the score
 	# fucking hate that i have to do this
@@ -56,105 +139,8 @@ class Convertor:
 		
 		print( repr( flams ))
 		return {}
-		return parsed	
-
-
-	def condense(self, parsed):
-		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
-
-		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
-		# 32 32 32 32rest 32 32 32 32
-		# should become
-		# 32 32 16 32 32 32 32
-
-		# for tenors, merge flam notes together
-
-		# expand unison surface into simultaneous based on number of basses?
-
-		# if timeSignature per measure is not specified, deduce into x/4
-
-		# annotate with durations
-		for (instrument,music) in parsed['instruments'].items():
-			dynamic = False 
-			dynamicChange = False
-			for measure in music:
-				for beat in measure['beats']:
-					# fix tenor flams
-					if instrument == 'tenor':
-						i = 0
-						z = len(beat)
-						while i < z:
-							note = beat[i]
-							if type(note) == dict and 'flam' in note and note['flam'] == True:
-								beat[ i+1 ]['flam'] = note['surface']
-								del beat[i]
-								z -= 1
-
-							i += 1
-
-					notes = len(beat)
-					tuple = False
-					if notes == 6 or notes == 5:
-						duration = 16
-						tuple = True
-					elif notes == 3:
-						duration = 8
-						tuple = True
-					else:
-						duration = 4 * notes
-
-					# annotate with durations
-					for note in beat:
-						if type(note) == list:
-							#print('list')
-							for simultaneous in note:
-								simultaneous['duration'] = duration
-								#print(simultaneous['surface'])
-						elif type(note) == dict:
-							note['duration'] = duration
-
-					# condense rests
-					i = 0
-					z = len(beat)
-					while i < z:
-						j = i + 1
-						if not j < z:
-							i += 2
-							continue
-						a = beat[i]
-						b = beat[j]
-						if type(b) == list:
-							j = 0
-						elif type(b) == dict:
-							if 'rest' in b:
-								if type(a) == dict:
-									a['duration'] /= 2
-									del beat[j]
-									i -= 1
-									z -= 1
-								
-				
-						i += 2
-					# end condense rests
-
-					# set dynamicChangeEnd
-					for note in beat:
-						if type(note) == list:
-							for simultaneous in note:
-								simultaneous['duration'] = duration
-								#print(simultaneous['surface'])
-						elif type(note) == dict:
-							if dynamicChange and 'dynamic' in note:
-								note['dynamicChangeEnd'] = True
-								dynamicChange = False
-							if 'dynamicChange' in note:
-								dynamicChange = True
-						
-
 		return parsed
 
-
-class LilypondConvertor(Convertor):
 	def convert(self, parsed, settings={}):
 		#a = self.flams(parsed)
 		#return ''

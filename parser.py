@@ -20,7 +20,7 @@ class Parser:
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
 		self.debug = False
-		self.debug2 = True
+		self.debug2 = False
 
 	def die(self, message):
 		print(message)
@@ -111,9 +111,9 @@ class Parser:
 		if instrument == 'snare':
 			a = self.snareMusic()
 		if instrument == 'tenor':
-			a = self.bassTenorMusic()
+			a = self.tenorMusic()
 		if instrument == 'bass':
-			a = self.bassTenorMusic()
+			a = self.bassMusic()
 		if instrument == 'cymbal':
 			a = self.cymbalMusic()
 		if a != self.NotFound:
@@ -300,16 +300,16 @@ class Parser:
 
 
 
-# bass and tenor methods
+# bass methods
 
-	def bassTenorMusic(self):
+	def bassMusic(self):
 		if self.debug:
-			print('In bassTenorMusic()')
+			print('In bassMusic()')
 		# returns an array of measures
 		ret = []
 
 		while 1:
-			a = self.bassTenorMeasure()
+			a = self.bassMeasure()
 
 			if a != self.NotFound:
 				ret.append(a)
@@ -329,7 +329,7 @@ class Parser:
 			return self.NotFound
 		return ret
 
-	def bassTenorMeasure(self):
+	def bassMeasure(self):
 		if self.debug:
 			print('In measure()')
 
@@ -339,7 +339,7 @@ class Parser:
 			'beats': []
 		}
 		while 1:
-			a = self.bassTenorBeat()
+			a = self.bassBeat()
 			if len(a) == 0:
 				break
 			ret['beats'].append(a)
@@ -350,31 +350,20 @@ class Parser:
 			return self.NotFound
 		return ret
 
-	def bassTenorBeat(self):
+	def bassBeat(self):
 		if self.debug:
-			print('In bassTenorBeat()')
+			print('In bassBeat()')
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','bassTenorSurface','sticking'].count(self.token):
-			if self.token == 'simultaneousA': # simultaneous
-				self.accept('simultaneousA')
-				a = self.simultaneousNotes()
-				if a == self.NotFound:
-					self.die('Should not be here')
-					break
-				else:
-					ret.append(a)
-				self.expect('simultaneousB')
-
+		while ['articulation','dynamic','rest','sticking','bassTenorSurface','bassSimultaneous'].count(self.token):
+			a = self.bassNote()
+			if a == self.NotFound:
+				if self.debug:
+					print('NotFound from bassNote()')
+				break
 			else:
-				a = self.bassTenorNote()
-				if a == self.NotFound:
-					if self.debug:
-						print('NotFound from bassTenorNote()')
-					break
-				else:
-					ret.append(a)
+				ret.append(a)
 
 		# are we at the sticking separator?
 		if self.token == 'startSticking':
@@ -395,37 +384,17 @@ class Parser:
 
 		return ret
 
-	# just like beat(), but without the parenthesis grouping
-	def simultaneousNotes(self,instrument):
+	def bassNote(self):
 		if self.debug:
-			print('In simultaneousNotes()')
-		# returns an array of notes
-		ret = []
-		while 1:
-			a = self.note(instrument)
-			if a == self.NotFound:
-				break
-			else:
-				ret.append(a)
-			# notes or modifiers
-			if ['articulation','dynamic','noteSurface','sticking'].count(self.token) == 0:
-				if self.debug:
-					print('Break from simultaneousNotes()')
-				break
-		return ret
-
-	def bassTenorNote(self):
-		if self.debug:
-			print('In bassTenorNote()')
+			print('In bassNote()')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
 			#'accent': False,
-			#'crescendo': False,
-			#'decrescendo': False,
-			#'stop
 			#'diddle': False,
 			#'dynamic': False,
+			#'dynamicChange': '>' or '<'
+			#'dynamicChangeEnd': False,
 			#'flam': False,
 			#'flamRest': False,
 			#'fours': False,
@@ -436,9 +405,9 @@ class Parser:
 			#'surface': False
 		}
 		
-		a = self.bassTenorModifiers()
+		a = self.bassModifiers()
 		ret.update(a)
-		a = self.bassTenorSurface()
+		a = self.bassSurface()
 
 		if a == self.NotFound: # if no surface, probably an error
 			return self.NotFound
@@ -447,21 +416,21 @@ class Parser:
 			ret.update(a)
 		return ret
 
-	def bassTenorModifiers(self):
+	def bassModifiers(self):
 		if self.debug:
-			print('In bassTenorModifiers()')
+			print('In bassModifiers()')
 		ret = {}
 		
 		while 1:
-			a = self.bassTenorModifier()
+			a = self.bassModifier()
 			if a == self.NotFound: # no modifiers, or no more modifiers
 				break
 			ret.update(a)
 		return ret
 
-	def bassTenorModifier(self):
+	def bassModifier(self):
 		if self.debug:
-			print('In bassTenorModifier()')
+			print('In bassModifier()')
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
@@ -481,9 +450,202 @@ class Parser:
 				print('No modifier or no more')
 			return self.NotFound
 
-	def bassTenorSurface(self):
+	def bassSurface(self):
 		if self.debug:
-			print('In bassTenorSurface()')
+			print('In bassSurface()')
+		ret = {}
+
+		if self.token == 'bassSimultaneous':
+			surface = ''
+			self.accept('bassSimultaneous')
+			while self.token == 'bassTenorSurface':
+				if re.search(self.value, "ABCDEFU"):
+					ret['accent'] = True # if any are accented, all will be
+					surface = surface + self.value.lower()
+		
+				elif re.search(self.value, "abcdefu"):
+					surface = surface + self.value
+
+				self.accept('bassTenorSurface')
+			self.accept('bassSimultaneous')
+			ret['surface'] = surface
+			return ret
+
+
+		else:
+			# bass tenor
+			if self.token == 'rest': #rest
+				ret['rest'] = True
+				self.accept('rest')
+				return ret
+	
+			elif re.search(self.value, "ABCDEFU"):
+				ret['accent'] = True
+				ret['surface'] = self.value.lower()
+				self.accept('bassTenorSurface')
+				return ret
+	
+			elif re.search(self.value, "abcdefu"):
+				ret['surface'] = self.value
+				self.accept('bassTenorSurface')
+				return ret
+				
+			else: # should only get here if there's an error
+				return self.NotFound
+
+# tenor methods
+
+	def tenorMusic(self):
+		if self.debug:
+			print('In tenorMusic()')
+		# returns an array of measures
+		ret = []
+
+		while 1:
+			a = self.tenorMeasure()
+
+			if a != self.NotFound:
+				ret.append(a)
+			else:
+				break
+
+			while self.token == 'space':
+				self.accept('space')
+			if self.token != 'pipe':
+				break
+			else:
+				if not self.accept('pipe'):
+					break
+			while self.token == 'space':
+				self.accept('space')
+		if len(ret) == 0:
+			return self.NotFound
+		return ret
+
+	def tenorMeasure(self):
+		if self.debug:
+			print('In measure()')
+
+		# returns a measure structure
+		ret = {
+			'timeSignature': '4/4',
+			'beats': []
+		}
+		while 1:
+			a = self.tenorBeat()
+			if len(a) == 0:
+				break
+			ret['beats'].append(a)
+			while self.token == 'space':
+				self.accept('space')
+
+		if len( ret['beats'] ) == 0:
+			return self.NotFound
+		return ret
+
+	def tenorBeat(self):
+		if self.debug:
+			print('In tenorBeat()')
+		# returns an array of notes
+		ret = []
+		# need to add simultaneous and other tokens
+		while ['articulation','dynamic','rest','sticking', 'bassTenorSurface'].count(self.token):
+			a = self.tenorNote()
+			if a == self.NotFound:
+				if self.debug:
+					print('NotFound from tenorNote()')
+				break
+			else:
+				ret.append(a)
+
+		# are we at the sticking separator?
+		if self.token == 'startSticking':
+			self.accept('startSticking')
+			b = self.sticking()
+			# now annotate notes in ret with stickings we just got?
+			i = 0
+			# should loop over sticking array instead
+			for note in ret:
+				if type(note) == list:
+					# copy to each note in simultaneous list
+					pass
+				elif type(note) == dict:
+					if not 'rest' in note:
+						#note['sticking'] = b[i]
+						#print(note['surface'])
+						i += 1
+
+		return ret
+
+	def tenorNote(self):
+		if self.debug:
+			print('In tenorNote()')
+		# returns a note structure
+		# this is just a sample of the structure, elements will not be present unless they have a value
+		ret = {
+			#'accent': False,
+			#'diddle': False,
+			#'dynamic': False,
+			#'dynamicChange': '>' or '<'
+			#'dynamicChangeEnd': False,
+			#'flam': False,
+			#'flamRest': False,
+			#'fours': False,
+			#'highAccent': False,
+			#'notes': [],
+			#'rest': False,
+			#'sticking': False,
+			#'surface': False
+		}
+		
+		a = self.tenorModifiers()
+		ret.update(a)
+		a = self.tenorSurface()
+
+		if a == self.NotFound: # if no surface, probably an error
+			return self.NotFound
+			#self.die('Should have caught this error in surfaceNote()')
+		else:
+			ret.update(a)
+		return ret
+
+	def tenorModifiers(self):
+		if self.debug:
+			print('In tenorModifiers()')
+		ret = {}
+		
+		while 1:
+			a = self.tenorModifier()
+			if a == self.NotFound: # no modifiers, or no more modifiers
+				break
+			ret.update(a)
+		return ret
+
+	def tenorModifier(self):
+		if self.debug:
+			print('In tenorModifier()')
+		ret = {}
+		if self.token == 'articulation':
+			if self.value == ',':
+				ret['flam'] = True
+			if self.value == '-':
+				ret['diddle'] = True
+			if self.value == '=':
+				ret['fours'] = True
+			self.accept('articulation')
+			return ret
+
+		elif self.token == 'dynamic':
+			return self.dynamicModifier()
+
+		else:
+			if self.debug:
+				print('No modifier or no more')
+			return self.NotFound
+
+	def tenorSurface(self):
+		if self.debug:
+			print('In tenorSurface()')
 		ret = {}
 
 		# bass tenor
@@ -549,7 +711,7 @@ rules = [
 
 	("snareSurface", r"[hHxX]"),
 	("bassTenorSurface", r"[aAbBcCdDeEuU]"),
-	("tenorSurface", r"[aAbBcCdDeE]"),
+	("bassSimultaneous", r"\[|\]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),

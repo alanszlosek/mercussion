@@ -46,6 +46,15 @@
 - no more passing filenames ... read input as if from keyboard and print output
 	- so on unix or windows one should use input/output redirection
 
+- simultaneous notes become condensed in the surface string, rather than an array of other notes
+	- because there's no need to allow simultaneous notes to have different dynamic settings (not possible on sheet music)
+
+- if i'm going to output my own midi
+	MICROSECONDS_PER_MINUTE = 60000000
+	BPM = MICROSECONDS_PER_MINUTE / MPQN
+	MPQN = MICROSECONDS_PER_MINUTE / BPM
+
+
 Done:
 
 - explicit \break every 4 measures
