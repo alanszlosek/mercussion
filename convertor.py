@@ -92,7 +92,21 @@ class Convertor:
 class MidiConvertor(Convertor):
 	# will need to hard-code volume levels for crescendos and decrescendos
 
+	def dynamicRanges(self, score):
+		for (instrument,music) in score['instruments'].items():
+			dynamic = False
+			for measure in music:
+				for beat in measure['beats']:
+					for note in beat:
+						if 'dynamicChange' in note:
+							dynamic = True
+							# found the start, now we need to find the end
+							# then calculate how much time would be in between
+						pass
+
 	def convert(self, score, settings):
+		#score = self.dynamicRanges(score)
+
 		instrumentProgramMap = {
 			"bass": "0",
 			"cymbal": "3",
@@ -125,8 +139,10 @@ class MidiConvertor(Convertor):
 		}
 
 		if 'tempo' in score:
-			tempo = 60000000 / int(score['tempo'])
+			scoreTempo = int(score['tempo'])
+			tempo = 60000000 / scoreTempo
 		else:
+			scoreTempo = 120
 			tempo = 500000
 
 		# MFile format tracks division
@@ -140,10 +156,10 @@ class MidiConvertor(Convertor):
 		# set counter a second into the future for blank space padding
 
 		channel = 1
-		startingCounter = 30 # calculate how much time would yield a second
 		flamPosition = -20 # calculate based on tempo
 		accentIncrease = int(127/4)
 		perBeat = 384
+		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
 		for (instrument,music) in score['instruments'].items():
 			volume = volumeMap['M']
@@ -264,38 +280,32 @@ class LilypondConvertor(Convertor):
 		return {}
 		return parsed
 
+	def fixTuplets(self, score):
+		for (instrument,music) in score['instruments'].items():
+			for measure in music:
+				for beat in measure['beats']:
+					tuplet = False
+					for note in beat:
+						# is last beat?
+						if note['duration'] == 32:
+							if not tuplet:
+								tuplet = True
+						elif note['duration'] == 24:
+							if not tuplet:
+								tuplet = True
+						else:
+							tuplet = False
+					pass
+		return score
+
 	def convert(self, parsed, settings={}):
 		#a = self.flams(parsed)
-		#return ''
 		a = self.condense(parsed)
+		a = self.fixTuplets(a)
 		#print( repr(a) )
 		#return
 
 		ret = '\\version "2.8.7"\n'
-
-		# not sure if this would work with timidity
-		ret += '#(define (myDynamics dynamic) (if (equal? dynamic "p") 0.20 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "mf") 0.60 (default-dynamic-absolute-volume dynamic)) (if (equal? dynamic "f") 1.00 (default-dynamic-absolute-volume dynamic)))\n'
-
-		# but this didn't work with timidity
-		#ret += '#(define my-instrument-equalizer-alist \'())\n'
-		#ret += '#(set! my-instrument-equalizer-alist\n'
-		#ret += '\t(append\n'
-		#ret += '\t\t\'(\n'
-		#ret += '\t\t\t("electric grand" . (0.01 . 1.0))\n' # snare. this doesn't seem to work
-		#ret += '\t\t\t("bright acoustic" . (0.01 . 1.0))\n' # bring tenor volume down?
-		#ret += '\t\t\t("acoustic grand" . (0.01 . 1.0))\n' # bass
-		#ret += '\t\t\t("honky-tonk" . (0.01 . 1.0))\n' # cymbal
-		#ret += '\t\t)\n'
-		#ret += '\t\tmy-instrument-equalizer-alist\n'
-		#ret += '\t)\n'
-		#ret += ')\n'
-		#ret += '#(define (my-instrument-equalizer s)\n'
-		#ret += '\t(let ((entry (assoc s my-instrument-equalizer-alist)))\n'
-		#ret += '\t(if entry\n'
-		#ret += '(cdr entry))))\n\n'
-
-		if settings['fixFlams']:
-			ret += 'appoggiatura = #(define-music-function (parser location grace main) (ly:music? ly:music?) (let* ( (maindur (ly:music-length main))  (grace-orig-len (ly:music-length grace)) (numerator (ly:moment-main-numerator maindur)) (factor (ly:make-moment 1 15)) ) (ly:music-compress grace factor) (ly:music-compress main (ly:moment-sub (ly:make-moment 1 1) factor))  (set! (ly:music-property grace \'elements) (append (ly:music-property grace \'elements) (list (make-music \'SlurEvent \'span-direction -1)) ) ) (set! (ly:music-property main \'elements) (append (ly:music-property main \'elements) (list (make-music \'SlurEvent \'span-direction 1)) ) ) (make-sequential-music (list grace main)) ) )\n\n'
 
 		ret += 'flam = {\n'
 		ret += '\t\\override Stem #\'length = #4\n'
@@ -354,50 +364,38 @@ class LilypondConvertor(Convertor):
 			if instrument == 'snare':
 				ret += '\t% Snare\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
+				#ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
-				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				ret += '\t\t\\set Staff.midiMaximumVolume = #0.60\n'
+				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.60\n'
 
 				#self.beaming()
 				#print('\\time ' + self.timeSignature)
+
 			elif instrument == 'tenor':
 				ret += '\t% Tenor\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
+				#ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
-				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				ret += '\t\t\\set Staff.midiMaximumVolume = #0.90\n'
+				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.90\n'
+
 			elif instrument == 'bass':
 				ret += '\t% Bass\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
+				#ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
-				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				ret += '\t\t\\set Staff.midiMaximumVolume = #1.00\n'
+				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				#ret += '\t\t\\set Staff.midiMaximumVolume = #1.00\n'
+
 			elif instrument == 'cymbal':
 				ret += '\t% Cymbals\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
+				#ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
 				ret +='\t\t\\set Staff.instrumentName = #"Cymbals "\n'
-				ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				ret += '\t\t\\set Staff.midiMaximumVolume = #0.80\n'
+				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
+				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.80\n'
 
-			# this doesn't seem to work
-			#ret += '\t\t#(set! absolute-volume-alist\n'
-			#ret += '\t\t\t(append\n'
-			#ret += '\t\t\t\t\'(\n'
-			#ret += '\t\t\t\t\t("ff" . 1.00)\n'
-			#ret += '\t\t\t\t\t("f" . 0.70)\n'
-			#ret += '\t\t\t\t\t("mf" . 0.40)\n'
-			#ret += '\t\t\t\t\t("p" . 0.10)\n'
-			#ret += '\t\t\t\t)\n'
-			#ret += '\t\t\t\tabsolute-volume-alist\n'
-			#ret += '\t\t\t)\n'
-			#ret += '\t\t)\n'
-
-			# this didn't work with timidity
-			#ret += '\t\t\\set Score.instrumentEqualizer = #my-instrument-equalizer\n'
 			ret += '\t\t\\stemUp\n'
 
 			iMeasure = 1
@@ -434,18 +432,18 @@ class LilypondConvertor(Convertor):
 
 							# note or rest?
 							if 'rest' in note:
-								ret += 'r' + str(note['duration'])
+								ret += 'r' + str(note['duration'] * 4)
 							else:
-								ret += mapping[ note['surface'] ] + str(note['duration'])
+								ret += mapping[ note['surface'] ] + str(note['duration'] * 4)
 
 							# diddle?
 							# check flag for whether to expand tremolos
 							if 'diddle' in note:
-								ret += ':' + str(note['duration']*2)
+								ret += ':' + str(note['duration'] * 4 * 2)
 
 							# fours?
 							if 'fours' in note:
-								ret += ':' + str(note['duration']*4)
+								ret += ':' + str(note['duration']* 4 * 4)
 
 							if 'decrescendo' in note:
 								crescendoDecrescendo = True
@@ -477,14 +475,6 @@ class LilypondConvertor(Convertor):
 		ret += '>>\n'
 		ret += '\t\\layout {\n'
 		#print('\t\tindent = 0')
-		ret += '\t}\n'
-		ret += '\t\\midi {\n'
-		ret += '\t\t\\context {\n'
-		ret += '\t\t\t\\Score\n'
-		ret += '\t\t\ttempoWholesPerMinute = #(ly:make-moment 120 4)\n'
-		ret += '\t\t\tmidiMinimumVolume = #0.05\n'
-		ret += '\t\t\tmidiMaximumVolume = #1.00\n'
-		ret += '\t\t}\n'
 		ret += '\t}\n'
 		ret += '}\n'
 		return ret
