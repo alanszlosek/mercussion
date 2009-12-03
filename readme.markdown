@@ -13,4 +13,4 @@ USAGE
 
 This will change, but for now:
 
-	python parser.py --lilypond MUSICFILE > MUSICFILE.ly
+	python parser.py MUSICFILE --midi > MUSICFILE.midi
