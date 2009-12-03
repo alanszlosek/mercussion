@@ -92,7 +92,7 @@ class Convertor:
 class MidiConvertor(Convertor):
 	# will need to hard-code volume levels for crescendos and decrescendos
 
-	def convert(self, score):
+	def convert(self, score, settings):
 		instrumentProgramMap = {
 			"bass": "0",
 			"cymbal": "3",
