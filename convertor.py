@@ -107,15 +107,15 @@ class MidiConvertor(Convertor):
 		}
 		noteMap = {
 			# snare
-			"h": "c4",
-			"x": "d4",
+			"h": "c6",
+			"x": "d6",
 
 			# bass and tenor
-			"a": "e4",
-			"b": "c4",
-			"c": "a3",
-			"d": "f3",
-			"e": "d3"
+			"a": "e6",
+			"b": "c6",
+			"c": "a5",
+			"d": "f5",
+			"e": "d5"
 		}
 		volumeMap = {
 			"P": 32, # pianissimo
@@ -124,11 +124,16 @@ class MidiConvertor(Convertor):
 			"G": 127 # ff
 		}
 
+		if 'tempo' in score:
+			tempo = 60000000 / int(score['tempo'])
+		else:
+			tempo = 500000
+
 		# MFile format tracks division
 		out = "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
 		# tempo track
 		out += "MTrk\n"
-		out += "0 Tempo 500000\n"
+		out += "0 Tempo " + str(tempo) + "\n"
 		out += "0 TimeSig 4/4 18 8\n"
 		out += "TrkEnd\n"
 
@@ -137,6 +142,7 @@ class MidiConvertor(Convertor):
 		channel = 1
 		startingCounter = 30 # calculate how much time would yield a second
 		flamPosition = -20 # calculate based on tempo
+		accentIncrease = int(127/4)
 		perBeat = 384
 
 		for (instrument,music) in score['instruments'].items():
@@ -170,14 +176,16 @@ class MidiConvertor(Convertor):
 								volume = volumeMap[ note['dynamic'] ]
 							tempVolume = volume
 							if 'accent' in note:
-								tempVolume += 127/4 # go up a quarter
+								tempVolume += accentIncrease # go up a quarter
+								if tempVolume > 127:
+									tempVolume = 127
 
 							# expand diddle/tremolo
 							if 'diddle' in note:
 								pass
 
 							for surface in note['surface']:
-								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(volume) + "\n"
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))

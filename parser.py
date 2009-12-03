@@ -353,7 +353,7 @@ class Parser:
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking','bassTenorSurface','bassSimultaneous'].count(self.token):
+		while ['articulation','dynamic','rest','sticking','bassTenorSurface','simultaneous'].count(self.token):
 			a = self.bassNote()
 			if a == self.NotFound:
 				if self.debug:
@@ -452,9 +452,9 @@ class Parser:
 			print('In bassSurface()')
 		ret = {}
 
-		if self.token == 'bassSimultaneous':
+		if self.token == 'simultaneous':
 			surface = ''
-			self.accept('bassSimultaneous')
+			self.accept('simultaneous')
 			while self.token == 'bassTenorSurface':
 				if re.search(self.value, "ABCDEFU"):
 					ret['accent'] = True # if any are accented, all will be
@@ -464,7 +464,7 @@ class Parser:
 					surface = surface + self.value
 
 				self.accept('bassTenorSurface')
-			self.accept('bassSimultaneous')
+			self.accept('simultaneous')
 			ret['surface'] = surface
 			return ret
 
@@ -709,13 +709,11 @@ rules = [
 
 	("snareSurface", r"[hHxX]"),
 	("bassTenorSurface", r"[aAbBcCdDeEuU]"),
-	("bassSimultaneous", r"\[|\]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
 
-	("simultaneousA", r"\("),
-	("simultaneousB", r"\)"),
+	("simultaneous", r"\(|\)"),
 	
 	("space", r"[\t\n ]"),
 	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string

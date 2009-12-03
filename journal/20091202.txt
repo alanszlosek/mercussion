@@ -21,14 +21,4 @@ Simple dynamic changes are working, but not dynamic ranges (crescendos/de..). At
 
 I'm not doing straight MIDI, I'm using midicomp, to convert an intermediate text format. Eventually I imagine I'll cut out the middle man.
 
-I'll need this later, for lilypond
-notes = len(beat)
-tuple = False
-if notes == 6 or notes == 5:
-	duration = 16
-	tuple = True
-elif notes == 3:
-	duration = 8
-	tuple = True
-else:
-	duration = 4 * notes
+My soundfont notes start at around c6.
