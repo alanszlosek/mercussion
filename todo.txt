@@ -34,9 +34,6 @@
 - annotate measures with timeSignature if one wasn't parsed
 	- use beats in measure over 4 as default
 
-- no more passing filenames ... read input as if from keyboard and print output
-	- so on unix or windows one should use input/output redirection
-
 - simultaneous notes become condensed in the surface string, rather than an array of other notes
 	- because there's no need to allow simultaneous notes to have different dynamic settings (not possible on sheet music)
 
@@ -56,6 +53,9 @@ Done:
 - proper clef on percussion staves
 - so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
 - convert unisons to simultaneous notes
+- no more passing filenames ... read input as if from keyboard and print output
+	- so on unix or windows one should use input/output redirection
+
 
 Bah
 
