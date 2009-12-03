@@ -15,12 +15,12 @@ This will change, but for now:
 
 Print internal data structure for input:
 
-	python parser.py MUSICFILE
+	python parser.py < MUSICFILE
 
 Output to lilypond format:
 
-	python parser.py MUSICFILE --lilypond > MUSICFILE.ly
+	python parser.py --lilypond < MUSICFILE > MUSICFILE.ly
 
 Midi doesn't work, but when it does:
 
-	python parser.py MUSICFILE --midi > MUSICFILE.midi
+	python parser.py --midi < MUSICFILE > MUSICFILE.midi
