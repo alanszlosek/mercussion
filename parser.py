@@ -15,11 +15,11 @@ class Parser:
 	value = ''
 	tree = []
 
-	def __init__(self, tokens):
+	def __init__(self, tokens, settings={}):
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
-		self.debug = False
-		self.debug2 = False
+		self.debug = ('debug' in settings)
+		self.debug2 = ('debug2' in settings)
 
 	def die(self, message):
 		sys.stderr.write(message)
@@ -712,26 +712,30 @@ settings = {
 	'basses': 5
 }
 
-which = ''
+# debug
+# debug2
+
 for arg in sys.argv:
 	if arg.startswith('--'): # flag
 		settings[ arg[2:] ] = True
 
 tokens = lex.scan( sys.stdin.read() )
 
-parser = Parser(tokens)
+# hmmm, which methods do i need to pass settings to?
+
+parser = Parser(tokens, settings)
 a = parser.score()
 
 # finalizes and annotates the intermediate data structure
 conv = Convertor()
 a = conv.condense(a)
 
-if which == 'midi':
+if 'midi' in settings:
 	out = MidiConvertor()
 	b = out.convert(a, settings)
 	sys.stdout.write(b)
 
-elif which == 'lilypond':
+elif 'lilypond' in settings:
 	out = LilypondConvertor()
 	b = out.convert(a, settings)
 	sys.stdout.write(b)
