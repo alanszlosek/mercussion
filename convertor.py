@@ -90,18 +90,20 @@ class Convertor:
 		return score 
 
 class MidiConvertor(Convertor):
+	# will need to hard-code volume levels for crescendos and decrescendos
+
 	def convert(self, score):
 		instrumentProgramMap = {
-			"snare": "2",
-			"tenor": "1",
 			"bass": "0",
-			"cymbal": "3"
+			"cymbal": "3",
+			"snare": "2",
+			"tenor": "1"
 		}
 		instrumentVolumeMap = {
-			"snare": "127",
-			"tenor": "127",
 			"bass": "127",
-			"cymbal": "127"
+			"cymbal": "127",
+			"snare": "127",
+			"tenor": "127"
 		}
 		noteMap = {
 			# snare
@@ -116,13 +118,14 @@ class MidiConvertor(Convertor):
 			"e": "d3"
 		}
 		volumeMap = {
-			"P": "10",
-			"M": "127"
+			"P": 32, # pianissimo
+			"M": 64, # mezzo-forte
+			"F": 95, # forte
+			"G": 127 # ff
 		}
 
-		out = ''
 		# MFile format tracks division
-		out += "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
+		out = "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
 		# tempo track
 		out += "MTrk\n"
 		out += "0 Tempo 500000\n"
@@ -135,9 +138,9 @@ class MidiConvertor(Convertor):
 		startingCounter = 30 # calculate how much time would yield a second
 		flamPosition = -20 # calculate based on tempo
 		perBeat = 384
+
 		for (instrument,music) in score['instruments'].items():
-                        dynamic = False
-                        dynamicChange = False
+			volume = volumeMap['M']
 			counter = startingCounter
 			nextBeat = counter + perBeat
 
@@ -145,9 +148,9 @@ class MidiConvertor(Convertor):
 	
 			out += "MTrk\n"
 			# map instrument to a channel
-			out += "0 PrCh ch=" + channelString + " p=" + instrumentProgramMap[instrument] + "\n"
+			out += "0 PrCh ch=" + channelString + " prog=" + instrumentProgramMap[instrument] + "\n"
 			# set main track volume
-			out += "0 Par ch=" + channelString + " c=7 p=" + instrumentVolumeMap[instrument] + "\n"
+			out += "0 Par ch=" + channelString + " con=7 val=" + instrumentVolumeMap[instrument] + "\n"
 			# could set panning here too!
 
                         for measure in music:
@@ -161,15 +164,26 @@ class MidiConvertor(Convertor):
 							if 'flam' in note:
 								#go back a bit, from current counter value
 								pass
-							volume = 'M'
+							
+							# prepare volume
+							if 'dynamic' in note:
+								volume = volumeMap[ note['dynamic'] ]
+							tempVolume = volume
+							if 'accent' in note:
+								tempVolume += 127/4 # go up a quarter
+
+							# expand diddle/tremolo
+							if 'diddle' in note:
+								pass
+
 							for surface in note['surface']:
-								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + volumeMap[ volume ] + "\n"
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(volume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
 							for surface in note['surface']:
 								# why do i sometimes see the note off volume at 64?
-								out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=127\n"
+								out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=0\n"
 								pass
 
 							# i bet some cymbal notes we'll have to avoid turning off until we get an explicit choke note
@@ -179,7 +193,7 @@ class MidiConvertor(Convertor):
 					counter += perBeat
 				# end beat loop
 			# end measure loop
-			out += "EndTrk\n"
+			out += "TrkEnd\n"
 
 			channel += 1
 		# end instrument loop
