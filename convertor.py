@@ -1,5 +1,5 @@
 class Convertor:
-	def condense(self, parsed):
+	def condense(self, score):
 		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
 
 		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
@@ -12,9 +12,14 @@ class Convertor:
 		# expand unison surface into simultaneous based on number of basses?
 
 		# if timeSignature per measure is not specified, deduce into x/4
+		basses = 'abcdef'
+		if 'basses' in score:
+			unison = basses[0: int(score['basses']) ]
+		else:
+			unison = basses[0:5]
 
 		# annotate with durations
-		for (instrument,music) in parsed['instruments'].items():
+		for (instrument,music) in score['instruments'].items():
 			dynamic = False 
 			dynamicChange = False
 			for measure in music:
@@ -44,19 +49,13 @@ class Convertor:
 								note['surface'] = 'abcde'
 					# end bass-specific
 
-					notes = len(beat)
-					tuple = False
-					if notes == 6 or notes == 5:
-						duration = 16
-						tuple = True
-					elif notes == 3:
-						duration = 8
-						tuple = True
-					else:
-						duration = 4 * notes
-
+					# this is really geared toward midi output
 					# annotate with durations
+					duration = len(beat)
 					for note in beat:
+						# duration is the denominator of the fraction,
+						# how much of the beat the note owns
+						# 4 would be 1/4 of a beat, thus a 16th note
 						note['duration'] = duration
 
 					# condense rests
@@ -88,78 +87,103 @@ class Convertor:
 							dynamicChange = True
 						
 
-		return parsed
+		return score 
 
 class MidiConvertor(Convertor):
-	def saveTo(self, score, file):
-		instrumentMap = {
+	def convert(self, score):
+		instrumentProgramMap = {
 			"snare": "2",
 			"tenor": "1",
 			"bass": "0",
 			"cymbal": "3"
 		}
-		volumeMap = {
+		instrumentVolumeMap = {
 			"snare": "127",
 			"tenor": "127",
 			"bass": "127",
 			"cymbal": "127"
 		}
-		snareMap = {
-			"h": "72"
+		noteMap = {
+			# snare
+			"h": "c4",
+			"x": "d4",
+
+			# bass and tenor
+			"a": "e4",
+			"b": "c4",
+			"c": "a3",
+			"d": "f3",
+			"e": "d3"
 		}
-		bassTenorMap = {
-			# these aren't right
-			"a": "76",
-			"b": "72",
-			"c": "72",
-			"d": "72",
-			"e": "72"
-		}
-		cymbalMap = {
+		volumeMap = {
+			"P": "10",
+			"M": "127"
 		}
 
-		out = open(file, "w+")	
+		out = ''
 		# MFile format tracks division
-		out.write("MFile 1 " + str(len(score['instruments'])) + " ?\n")
+		out += "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
 		# tempo track
-		out.write("MTrk\n")
-		out.write("000:00:000 Tempo 500000\n")
-		out.write("000:00:000 TimeSig 4/4 32 99\n")
-		out.write("TrkEnd\n")
+		out += "MTrk\n"
+		out += "0 Tempo 500000\n"
+		out += "0 TimeSig 4/4 18 8\n"
+		out += "TrkEnd\n"
 
 		# set counter a second into the future for blank space padding
 
 		channel = 1
 		startingCounter = 30 # calculate how much time would yield a second
 		flamPosition = -20 # calculate based on tempo
+		perBeat = 384
 		for (instrument,music) in score['instruments'].items():
                         dynamic = False
                         dynamicChange = False
 			counter = startingCounter
+			nextBeat = counter + perBeat
 
 			channelString = str(channel)
 	
-			out.write("Trk\n")
+			out += "MTrk\n"
 			# map instrument to a channel
-			out.write("PrCh ch=" + channelString + " p=" + instrumentMap[instrument] + "\n")
+			out += "0 PrCh ch=" + channelString + " p=" + instrumentProgramMap[instrument] + "\n"
 			# set main track volume
-			out.write("Par ch=" + channelString + " c=7 p=" + volumeMap[instrument] + "\n")
+			out += "0 Par ch=" + channelString + " c=7 p=" + instrumentVolumeMap[instrument] + "\n"
 			# could set panning here too!
 
                         for measure in music:
                                 for beat in measure['beats']:
+					c1 = counter
 					for note in beat:
-						if 'flam' in note:
-							#go back a bit, from current counter value
+						c2 = str(c1)
+						if 'rest' in note:
 							pass
+						else:
+							if 'flam' in note:
+								#go back a bit, from current counter value
+								pass
+							volume = 'M'
+							for surface in note['surface']:
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + volumeMap[ volume ] + "\n"
+							# when do we turn off
+							# divide
+							c3 = str(c1 + (perBeat / note['duration']))
+							for surface in note['surface']:
+								# why do i sometimes see the note off volume at 64?
+								out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=127\n"
+								pass
+
+							# i bet some cymbal notes we'll have to avoid turning off until we get an explicit choke note
+
+						c1 += (perBeat / note['duration']) # how long does this note last?
+					nextBeat += perBeat
+					counter += perBeat
 				# end beat loop
 			# end measure loop
-			out.write("EndTrk\n")
+			out += "EndTrk\n"
 
 			channel += 1
 		# end instrument loop
-		out.close()
-		return True
+		return out
 
 class LilypondConvertor(Convertor):
 	# lilypond specific

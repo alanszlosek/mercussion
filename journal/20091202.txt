@@ -10,5 +10,24 @@ MPQN = MICROSECONDS_PER_MINUTE / BPM
 
 BPM = 120
 
-Tempo = length of quarter notes = 60000000 / BPM
+
+Tempo = how many microseconds does a quarter note last = 60000000 / BPM
 Division = click per quarter note 
+
+
+I'm reading this MIDI website and I don't get it. I just need to start writing code so I can try things.
+
+Think I'm going to have to adjust the way I store durations in my data structure to simplify calculations. Most of our calculations will be applied to the number of ticks per beat ...
+
+
+I'll need this later, for lilypond
+notes = len(beat)
+tuple = False
+if notes == 6 or notes == 5:
+	duration = 16
+	tuple = True
+elif notes == 3:
+	duration = 8
+	tuple = True
+else:
+	duration = 4 * notes

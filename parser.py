@@ -1,7 +1,6 @@
 import sys
 from lexer import *
 from convertor import *
-import pickle
 
 # what i'd like is for each method to return a data structure
 # or empty if there were no matches
@@ -740,14 +739,15 @@ settings = {
 	'expandTremolos': False,
 	'tapOff': False
 }
-if sys.argv[1] == '--midi':
-	settings['fixFlams'] = True
-	settings['expandTremolos'] = True
-	settings['tapOff'] = True
-	settings['midi'] = True
-	f = open(sys.argv[2], 'r')
-else:
-	f = open(sys.argv[1], 'r')
+
+# would rather read from stdin
+f = open(sys.argv[1], 'r')
+
+which = ''
+for arg in sys.argv:
+	if arg.startswith('--'): # flag
+		which = arg[2:]	
+		pass
 
 text = f.read()
 tokens = lex.scan(text)
@@ -759,8 +759,13 @@ a = parser.score()
 conv = Convertor()
 a = conv.condense(a)
 
-# i'd rather pass repr() output to Convertor classes than pickle output (repr is human-readable)
-print( repr(a) )
+if which == 'midi':
+	midi = MidiConvertor()
+	b = midi.convert(a)
+	print(b)
+
+else:
+	print( repr(a) )
 
 #convertor = LilypondConvertor()
 #b = convertor.convert(a, settings)
