@@ -1,15 +1,10 @@
 - make sure: [abc][abc]r (triplet) works with lilypond output
 
-- so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
-
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
 	- if i do my own midi output, this might be quite easy to do
 
 - flags for which instruments to output (instead of all by default)
 	- like this: --instrument snare,tenor
-
-- flag for whether to expand tremolos, etc
-	- needed for lilypond's midi output
 
 - interbeat tuplets
 	- arg.
@@ -28,15 +23,11 @@
 	- don't need a dynamic to start a descrescendo/crescendo, but when in progress, a dynamic specifier STOPS it
 	- but what if a cresc stops and a decre begins on the same note?
 
-- parse unisons into simultaneous notes?
-        - only when compiling for midi output?
-
 - plan cymbal notation
 
 - shots on tenors
 
-- ability to specify the number of basses (for unison expansion ... or should we even expand them)?
-	- yes, expand for midi
+- ability to specify the number of basses for unison expansion
 
 - ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
 
@@ -56,10 +47,20 @@
 
 	128 velocity is max volume
 
+- midi output
+	- calculate and hardcode volume levels in score for dynamic ranges
+
 Done:
 
 - explicit \break every 4 measures
 - proper clef on percussion staves
+- so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
+- convert unisons to simultaneous notes
+
+Bah
+
+- flag for whether to expand tremolos, etc
+	- needed for lilypond's midi output
 
 Questions:
 
