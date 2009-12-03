@@ -22,13 +22,13 @@ class Parser:
 		self.debug2 = False
 
 	def die(self, message):
-		print(message)
+		sys.stderr.write(message)
 		sys.exit()
 
 	def accept(self, a):
 		if self.token == a:
 			if self.debug2:
-				print('Accept ' + self.token + ':' + self.value)
+				sys.stderr.write('Accept ' + self.token + ':' + self.value + "\n")
 			# self.next() might not have anymore input
 			self.next()
 			return True
@@ -46,7 +46,7 @@ class Parser:
 		except StopIteration:
 			self.token = self.value = False
 			if self.debug:
-				print('No more')
+				sys.stderr.write('No more\n')
 			return False
 
 		except UnknownTokenError:
@@ -54,7 +54,7 @@ class Parser:
 			self.die('Unknown token')
 			return False
 		if self.debug:
-			print('At ' + self.token + ':' + self.value)
+			sys.stderr.write('At ' + self.token + ':' + self.value + "\n")
 		return True
 
 
@@ -65,9 +65,6 @@ class Parser:
 			ret.update(a)
 		a = self.instruments()
 		ret['instruments'] = a
-		if self.debug:
-			print( repr(ret) )
-
 		return ret
 
 	def details(self):
@@ -85,7 +82,7 @@ class Parser:
 
 	def instruments(self):
 		if self.debug:
-			print('In instruments()')
+			sys.stderr.write('In instruments()\n')
 		ret = {}
 		while self.token == 'instrument':
 			a = self.instrument()
@@ -98,7 +95,7 @@ class Parser:
 	
 	def instrument(self):
 		if self.debug:
-			print('In instrument()')
+			sys.stderr.write('In instrument()\n')
 		ret = {}
 		
 		instrument = self.value.replace(':', '')
@@ -122,7 +119,7 @@ class Parser:
 	# music()	
 	def snareMusic(self):
 		if self.debug:
-			print('In snareMusic()')
+			sys.stderr.write('In snareMusic()\n')
 		# returns an array of measures
 		ret = []
 
@@ -135,8 +132,6 @@ class Parser:
 				ret.append(a)
 			else:
 				break
-			#print(self.token)
-			#sys.exit()
 			while self.token == 'space':
 				self.accept('space')
 			if self.token != 'pipe':
@@ -152,7 +147,7 @@ class Parser:
 
 	def snareMeasure(self):
 		if self.debug:
-			print('In measure()')
+			sys.stderr.write('In measure()\n')
 
 		# returns a measure structure
 		ret = {
@@ -173,7 +168,7 @@ class Parser:
 
 	def snareBeat(self):
 		if self.debug:
-			print('In snareBeat()')
+			sys.stderr.write('In snareBeat()\n')
 		# returns an array of notes
 		ret = []
 		while ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token):
@@ -181,7 +176,7 @@ class Parser:
 			a = self.snareNote()
 			if a == self.NotFound:
 				if self.debug:
-					print('NotFound from snareNote()')
+					sys.stderr.write('NotFound from snareNote()\n')
 				break
 			else:
 				ret.append(a)
@@ -197,14 +192,13 @@ class Parser:
 				note = ret[ i ]
 				if sticking != '.':
 					note['sticking'] = stickings[i]
-					#print(note['surface'])
 				i += 1
 			
 		return ret
 
 	def snareNote(self):
 		if self.debug:
-			print('In snareNote()')
+			sys.stderr.write('In snareNote()\n')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
@@ -236,7 +230,7 @@ class Parser:
 
 	def snareModifiers(self):
 		if self.debug:
-			print('In snareModifiers()')
+			sys.stderr.write('In snareModifiers()\n')
 		ret = {}
 		
 		while 1:
@@ -248,7 +242,7 @@ class Parser:
 
 	def snareModifier(self):
 		if self.debug:
-			print('In snareModifier()')
+			sys.stderr.write('In snareModifier()\n')
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
@@ -265,12 +259,12 @@ class Parser:
 
 		else:
 			if self.debug:
-				print('No modifier or no more')
+				sys.stderr.write('No modifier or no more\n')
 			return self.NotFound
 
 	def snareSurface(self):
 		if self.debug:
-			print('In snareSurface()')
+			sys.stderr.write('In snareSurface()\n')
 		ret = {}
 
 		# snare
@@ -301,7 +295,7 @@ class Parser:
 
 	def bassMusic(self):
 		if self.debug:
-			print('In bassMusic()')
+			sys.stderr.write('In bassMusic()\n')
 		# returns an array of measures
 		ret = []
 
@@ -328,7 +322,7 @@ class Parser:
 
 	def bassMeasure(self):
 		if self.debug:
-			print('In measure()')
+			sys.stderr.write('In measure()\n')
 
 		# returns a measure structure
 		ret = {
@@ -349,7 +343,7 @@ class Parser:
 
 	def bassBeat(self):
 		if self.debug:
-			print('In bassBeat()')
+			sys.stderr.write('In bassBeat()\n')
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
@@ -357,7 +351,7 @@ class Parser:
 			a = self.bassNote()
 			if a == self.NotFound:
 				if self.debug:
-					print('NotFound from bassNote()')
+					sys.stderr.write('NotFound from bassNote()\n')
 				break
 			else:
 				ret.append(a)
@@ -365,25 +359,20 @@ class Parser:
 		# are we at the sticking separator?
 		if self.token == 'startSticking':
 			self.accept('startSticking')
-			b = self.sticking()
+			stickings = self.sticking()
 			# now annotate notes in ret with stickings we just got?
 			i = 0
-			# should loop over sticking array instead
-			for note in ret:
-				if type(note) == list:
-					# copy to each note in simultaneous list
-					pass
-				elif type(note) == dict:
-					if not 'rest' in note:
-						#note['sticking'] = b[i]
-						#print(note['surface'])
-						i += 1
+			for sticking in stickings:
+				note = ret[ i ]
+				if sticking != '.':
+					note['sticking'] = stickings[i]
+				i += 1
 
 		return ret
 
 	def bassNote(self):
 		if self.debug:
-			print('In bassNote()')
+			sys.stderr.write('In bassNote()\n')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
@@ -415,7 +404,7 @@ class Parser:
 
 	def bassModifiers(self):
 		if self.debug:
-			print('In bassModifiers()')
+			sys.stderr.write('In bassModifiers()\n')
 		ret = {}
 		
 		while 1:
@@ -427,7 +416,7 @@ class Parser:
 
 	def bassModifier(self):
 		if self.debug:
-			print('In bassModifier()')
+			sys.stderr.write('In bassModifier()\n')
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
@@ -444,12 +433,12 @@ class Parser:
 
 		else:
 			if self.debug:
-				print('No modifier or no more')
+				sys.stderr.write('No modifier or no more\n')
 			return self.NotFound
 
 	def bassSurface(self):
 		if self.debug:
-			print('In bassSurface()')
+			sys.stderr.write('In bassSurface()\n')
 		ret = {}
 
 		if self.token == 'simultaneous':
@@ -494,7 +483,7 @@ class Parser:
 
 	def tenorMusic(self):
 		if self.debug:
-			print('In tenorMusic()')
+			sys.stderr.write('In tenorMusic()\n')
 		# returns an array of measures
 		ret = []
 
@@ -521,7 +510,7 @@ class Parser:
 
 	def tenorMeasure(self):
 		if self.debug:
-			print('In measure()')
+			sys.stderr.write('In measure()\n')
 
 		# returns a measure structure
 		ret = {
@@ -542,7 +531,7 @@ class Parser:
 
 	def tenorBeat(self):
 		if self.debug:
-			print('In tenorBeat()')
+			sys.stderr.write('In tenorBeat()\n')
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
@@ -550,7 +539,7 @@ class Parser:
 			a = self.tenorNote()
 			if a == self.NotFound:
 				if self.debug:
-					print('NotFound from tenorNote()')
+					sys.stderr.write('NotFound from tenorNote()\n')
 				break
 			else:
 				ret.append(a)
@@ -558,25 +547,20 @@ class Parser:
 		# are we at the sticking separator?
 		if self.token == 'startSticking':
 			self.accept('startSticking')
-			b = self.sticking()
+			stickings = self.sticking()
 			# now annotate notes in ret with stickings we just got?
 			i = 0
-			# should loop over sticking array instead
-			for note in ret:
-				if type(note) == list:
-					# copy to each note in simultaneous list
-					pass
-				elif type(note) == dict:
-					if not 'rest' in note:
-						#note['sticking'] = b[i]
-						#print(note['surface'])
-						i += 1
+			for sticking in stickings:
+				note = ret[ i ]
+				if sticking != '.':
+					note['sticking'] = stickings[i]
+				i += 1
 
 		return ret
 
 	def tenorNote(self):
 		if self.debug:
-			print('In tenorNote()')
+			sys.stderr.write('In tenorNote()\n')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
@@ -608,7 +592,7 @@ class Parser:
 
 	def tenorModifiers(self):
 		if self.debug:
-			print('In tenorModifiers()')
+			sys.stderr.write('In tenorModifiers()\n')
 		ret = {}
 		
 		while 1:
@@ -620,7 +604,7 @@ class Parser:
 
 	def tenorModifier(self):
 		if self.debug:
-			print('In tenorModifier()')
+			sys.stderr.write('In tenorModifier()\n')
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
@@ -637,12 +621,12 @@ class Parser:
 
 		else:
 			if self.debug:
-				print('No modifier or no more')
+				sys.stderr.write('No modifier or no more\n')
 			return self.NotFound
 
 	def tenorSurface(self):
 		if self.debug:
-			print('In tenorSurface()')
+			sys.stderr.write('In tenorSurface()\n')
 		ret = {}
 
 		# bass tenor
@@ -724,28 +708,16 @@ rules = [
  
 lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 
-#tokens = lex.scan("title:\"Listen here Fucker\" author: \"Alan Szlosek\" snare:\n\tPH-hhh x.hh ,hh,hh | lhlh =h=h\nbass:\n\tPaa bb cc|aabb")
-#tokens = lex.scan("snare:(ab).cd aab bbc | . . . | a b c")
-#tokens = lex.scan("snare:P,H.hh -hHhh Mhhh.hh")
-#tokens = lex.scan("b.cd")
-#tokens = lex.scan("snare: hhhh hhh. tenor: ,bCba,aD abC.")
-
 settings = {
-	'basses': 5,
-	'tapOff': False
+	'basses': 5
 }
-
-# would rather read from stdin
-f = open(sys.argv[1], 'r')
 
 which = ''
 for arg in sys.argv:
 	if arg.startswith('--'): # flag
-		which = arg[2:]	
-		pass
+		settings[ arg[2:] ] = True
 
-text = f.read()
-tokens = lex.scan(text)
+tokens = lex.scan( sys.stdin.read() )
 
 parser = Parser(tokens)
 a = parser.score()
@@ -755,13 +727,14 @@ conv = Convertor()
 a = conv.condense(a)
 
 if which == 'midi':
-	midi = MidiConvertor()
-	b = midi.convert(a)
-	print(b)
+	out = MidiConvertor()
+	b = out.convert(a, settings)
+	sys.stdout.write(b)
+
+elif which == 'lilypond':
+	out = LilypondConvertor()
+	b = out.convert(a, settings)
+	sys.stdout.write(b)
 
 else:
-	print( repr(a) )
-
-#convertor = LilypondConvertor()
-#b = convertor.convert(a, settings)
-#print( b )
+	sys.stdout.write( repr(a) )
