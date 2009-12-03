@@ -190,17 +190,15 @@ class Parser:
 		# are we at the sticking separator?
 		if self.token == 'startSticking':
 			self.accept('startSticking')
-			b = self.sticking()
+			stickings = self.sticking()
 			# now annotate notes in ret with stickings we just got?
 			i = 0
-			for note in ret:
-				if type(note) == list:
-					pass
-				elif type(note) == dict:
-					if not 'rest' in note:
-						note['sticking'] = b[i]
-						#print(note['surface'])
-						i += 1
+			for sticking in stickings:
+				note = ret[ i ]
+				if sticking != '.':
+					note['sticking'] = stickings[i]
+					#print(note['surface'])
+				i += 1
 			
 		return ret
 
@@ -673,6 +671,7 @@ class Parser:
 		while self.token == 'sticking' or self.token == 'rest':
 			a = self.token
 			if a == 'rest':
+				ret.append(self.value)
 				self.accept('rest')
 			if a == 'sticking':
 				ret.append(self.value)
@@ -735,8 +734,6 @@ lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 
 settings = {
 	'basses': 5,
-	'fixFlams': False,
-	'expandTremolos': False,
 	'tapOff': False
 }
 
