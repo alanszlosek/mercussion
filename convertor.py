@@ -280,30 +280,46 @@ class LilypondConvertor(Convertor):
 		return {}
 		return parsed
 
-	def fixTuplets(self, score):
+	# or fixDurations
+	def fixDurations(self, score):
+		# 1=4, 2=8, 3=8tuplet, 4=16, 5=16tuplet, 6=16tuplet, 7=16tuplet, 8=32
 		for (instrument,music) in score['instruments'].items():
 			for measure in music:
 				for beat in measure['beats']:
 					tuplet = False
+					i = 0
+					sz = len(beat) - 1
 					for note in beat:
+						# if tuplet and (last note in a beat, or no longer tuplet), close tuplet
 						# is last beat?
-						if note['duration'] == 32:
-							if not tuplet:
-								tuplet = True
-						elif note['duration'] == 24:
-							if not tuplet:
-								tuplet = True
-						else:
+						if note['duration'] == 3:
+							duration = 8
+							if tuplet == False:
+								note['startTuplet'] = tuplet = True
+						elif note['duration'] > 4 and note['duration'] < 8:
+							duration = 16
+							if tuplet == False:
+								note['startTuplet'] = tuplet = True
+
+						if tuplet:
+							if i == sz:
+								beat[ i ]['stopTuplet'] = True
+							elif not 'startTuplet' in note:
+								beat[ i - 1 ]['stopTuplet'] = True
+
+						if note['duration'] == 1 or note['duration'] == 2 or note['duration'] % 4 == 0:
+							duration *= 4
 							tuplet = False
-					pass
+						note['duration'] = duration
+						i += 1
 		return score
 
 	def convert(self, parsed, settings={}):
 		#a = self.flams(parsed)
 		a = self.condense(parsed)
-		a = self.fixTuplets(a)
-		#print( repr(a) )
-		#return
+		a = self.fixDurations(a)
+		print( repr(a) )
+		return
 
 		ret = '\\version "2.8.7"\n'
 
@@ -432,18 +448,18 @@ class LilypondConvertor(Convertor):
 
 							# note or rest?
 							if 'rest' in note:
-								ret += 'r' + str(note['duration'] * 4)
+								ret += 'r' + str(note['duration'])
 							else:
-								ret += mapping[ note['surface'] ] + str(note['duration'] * 4)
+								ret += mapping[ note['surface'] ] + str(note['duration'])
 
 							# diddle?
 							# check flag for whether to expand tremolos
 							if 'diddle' in note:
-								ret += ':' + str(note['duration'] * 4 * 2)
+								ret += ':' + str(note['duration'] * 2)
 
 							# fours?
 							if 'fours' in note:
-								ret += ':' + str(note['duration']* 4 * 4)
+								ret += ':' + str(note['duration'] * 4)
 
 							if 'decrescendo' in note:
 								crescendoDecrescendo = True
