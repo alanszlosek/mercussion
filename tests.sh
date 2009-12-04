@@ -7,8 +7,9 @@ do
 	python ../parser.py --lilypond < $file > ly/$file.ly
 	~/downloads/midicomp-0.0.4/midicomp -c miditext/$file.miditext midi/$file.midi
 	timidity -c ~/composition/soundfont/timidity.cfg -Ow midi/$file.midi -o wav/$file.wav
-	cd ly
-	lilypond $file.ly --pdf
+	cd pdf
+	lilypond --pdf ../ly/$file.ly
+	rm *.ps
 	cd ..
 	echo "done"
 done
