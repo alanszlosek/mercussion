@@ -1,8 +1,3 @@
-- tuplets
-	- annotate in logic that sets durations
-	- set tuplet=True in durations != (1,2,%4=0)
-	- in lilypond output, just look for change in tuplet flag for whether to start/end tuplet
-
 - make sure: [abc][abc]r (triplet) works with lilypond output
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
@@ -60,6 +55,13 @@ Done:
 - convert unisons to simultaneous notes
 - no more passing filenames ... read input as if from keyboard and print output
 	- so on unix or windows one should use input/output redirection
+- tuplets
+	- annotate in logic that sets durations
+	- set tuplet=True in durations != (1,2,%4=0)
+	- in lilypond output, just look for change in tuplet flag for whether to start/end tuplet
+		- but there may be two triplets in a row, and we need to know when to stop one and start the other
+	- guess we have to detect how many notes should be in the triplet based on the duration and set start/stop flags
+	- the rest condensing i'm doing makes tuples less straight-forward
 
 
 Bah
