@@ -1,3 +1,8 @@
+- tuplets
+	- annotate in logic that sets durations
+	- set tuplet=True in durations != (1,2,%4=0)
+	- in lilypond output, just look for change in tuplet flag for whether to start/end tuplet
+
 - make sure: [abc][abc]r (triplet) works with lilypond output
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
