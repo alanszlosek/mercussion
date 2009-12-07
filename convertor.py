@@ -57,6 +57,8 @@ class Convertor:
 						# how much of the beat the note owns
 						# 4 would be 1/4 of a beat, thus a 16th note
 						note['duration'] = duration
+						if not (duration == 1 or duration == 2 or duration % 4 == 0):
+							note['tuplet'] = duration
 
 					# condense rests
 					i = 0
@@ -68,12 +70,11 @@ class Convertor:
 							continue
 						a = beat[i]
 						b = beat[j]
-						if 'rest' in b:
-							if type(a) == dict:
-								a['duration'] /= 2
-								del beat[j]
-								i -= 1
-								z -= 1
+						if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
+							a['duration'] /= 2
+							del beat[j]
+							i -= 1
+							z -= 1
 				
 						i += 2
 					# end condense rests
@@ -215,6 +216,7 @@ class MidiConvertor(Convertor):
 						c1 += (perBeat / note['duration']) # how long does this note last?
 					nextBeat += perBeat
 					counter += perBeat
+					# end note loop
 				# end beat loop
 			# end measure loop
 			out += "TrkEnd\n"
@@ -282,44 +284,31 @@ class LilypondConvertor(Convertor):
 
 	# or fixDurations
 	def fixDurations(self, score):
+		# fix durations and set tuplet flags
+		# tuplet flags may already be set in some cases by left/right square brackets
+
 		# 1=4, 2=8, 3=8tuplet, 4=16, 5=16tuplet, 6=16tuplet, 7=16tuplet, 8=32
 		for (instrument,music) in score['instruments'].items():
 			for measure in music:
 				for beat in measure['beats']:
-					tuplet = False
-					i = 0
-					sz = len(beat) - 1
 					for note in beat:
 						# if tuplet and (last note in a beat, or no longer tuplet), close tuplet
 						# is last beat?
 						if note['duration'] == 3:
 							duration = 8
-							if tuplet == False:
-								note['startTuplet'] = tuplet = True
+
 						elif note['duration'] > 4 and note['duration'] < 8:
 							duration = 16
-							if tuplet == False:
-								note['startTuplet'] = tuplet = True
 
-						if tuplet:
-							if i == sz:
-								beat[ i ]['stopTuplet'] = True
-							elif not 'startTuplet' in note:
-								beat[ i - 1 ]['stopTuplet'] = True
+						elif note['duration'] == 1 or note['duration'] == 2 or note['duration'] % 4 == 0:
+							duration = note['duration'] * 4
 
-						if note['duration'] == 1 or note['duration'] == 2 or note['duration'] % 4 == 0:
-							duration *= 4
-							tuplet = False
 						note['duration'] = duration
-						i += 1
 		return score
 
 	def convert(self, parsed, settings={}):
 		#a = self.flams(parsed)
-		a = self.condense(parsed)
-		a = self.fixDurations(a)
-		print( repr(a) )
-		return
+		a = self.fixDurations(parsed)
 
 		ret = '\\version "2.8.7"\n'
 
@@ -368,8 +357,6 @@ class LilypondConvertor(Convertor):
 			':': '\\!'
 		}
 
-		# annotate with flamRest placeholders
-
 		# set this flag when we encounter one of them
 		# unset it when we encounter the first dynamic that's not one
 		crescendoDecrescendo = False
@@ -414,6 +401,9 @@ class LilypondConvertor(Convertor):
 
 			ret += '\t\t\\stemUp\n'
 
+			tuplet = False
+			tupletCount = 0
+
 			iMeasure = 1
 			for measure in music:
 				beats = len(measure['beats'])
@@ -430,6 +420,11 @@ class LilypondConvertor(Convertor):
 							notes.append(note2)
 						
 						for note in notes:
+							# close out previous tuplet
+							if tuplet and (not 'tuplet' in note or tupletCount == note['tuplet']):
+								ret += '} '
+								tuplet = False
+								tupletCount = 0
 							# i actually think dynamics are supposed to go after notes. ugh
 							# new dynamic:
 							if 'dynamic' in note and crescendoDecrescendo:
@@ -437,14 +432,21 @@ class LilypondConvertor(Convertor):
 								crescendoDecrescendo = False
 								ret += '\! '
 
+							if tuplet == False and 'tuplet' in note:
+								if note['tuplet'] == 3:
+									ret += '\\times 2/3 { '
+								else:
+									ret += '\\times 4/6 { '
+								tuplet = True
+							if 'tuplet' in note and not 'rest' in note:
+								tupletCount += 1
+
 							if 'flam' in note:
 								if instrument == 'snare':
 									ret += '\\override Stem #\'length = #4 \\appoggiatura c\'\'8 \\revert Stem #\'length \stemUp '
 								else:
 									ret += '\\override Stem #\'length = #4 \\appoggiatura ' + mapping[ note['flam'] ] + '8 \\revert Stem #\'length \stemUp '
 
-							elif 'flamRest' in note:
-								ret += '\\appoggiatura r8 '
 
 							# note or rest?
 							if 'rest' in note:
@@ -478,6 +480,10 @@ class LilypondConvertor(Convertor):
 						if type(note2) == list:
 							ret += '>>'
 						ret += ' '
+					# end note loop
+
+				if tuplet:
+					ret += '} '
 
 				ret += ' \n '
 				if iMeasure == 4:
@@ -485,8 +491,10 @@ class LilypondConvertor(Convertor):
 					iMeasure = 1
 				else:
 					iMeasure += 1
+				# end measure loop
 		
 			ret += '}\n'
+		# end
 
 		ret += '>>\n'
 		ret += '\t\\layout {\n'
