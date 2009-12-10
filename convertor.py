@@ -117,7 +117,7 @@ class MidiConvertor(Convertor):
 		instrumentVolumeMap = {
 			"bass": "127",
 			"cymbal": "127",
-			"snare": "127",
+			"snare": "100",
 			"tenor": "127"
 		}
 		noteMap = {
@@ -185,8 +185,10 @@ class MidiConvertor(Convertor):
 							pass
 						else:
 							if 'flam' in note:
+								# if surface is shot, flams should be on the drum head
+								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
-								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=" + str(volumeMap['P']) + "\n"
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(volumeMap['P']) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
 							# prepare volume
