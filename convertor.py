@@ -186,7 +186,8 @@ class MidiConvertor(Convertor):
 						else:
 							if 'flam' in note:
 								#go back a bit, from current counter value
-								pass
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=" + str(volumeMap['P']) + "\n"
+								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
 							# prepare volume
 							if 'dynamic' in note:
@@ -197,18 +198,19 @@ class MidiConvertor(Convertor):
 								if tempVolume > 127:
 									tempVolume = 127
 
-							# expand diddle/tremolo
-							if 'diddle' in note:
-								pass
-
 							for surface in note['surface']:
 								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+								# expand diddle/tremolo
+								# add the second note
+								if 'diddle' in note:
+									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
+									out += c3 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
 							for surface in note['surface']:
 								# why do i sometimes see the note off volume at 64?
-								out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=0\n"
+								#out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=0\n"
 								pass
 
 							# i bet some cymbal notes we'll have to avoid turning off until we get an explicit choke note
