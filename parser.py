@@ -246,7 +246,7 @@ class Parser:
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
-				ret['flam'] = True
+				ret['flam'] = 'h'
 			if self.value == '-':
 				ret['diddle'] = True
 			if self.value == '=':
