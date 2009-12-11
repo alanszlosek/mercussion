@@ -1,3 +1,6 @@
+- update lilypond output to work with multiple surfaces
+- comments should start with # and not ;, since : denotes sticking, might mistype ; for :
+
 - make sure: [abc][abc]r (triplet) works with lilypond output
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
@@ -63,6 +66,8 @@ Done:
 		- but there may be two triplets in a row, and we need to know when to stop one and start the other
 	- guess we have to detect how many notes should be in the triplet based on the duration and set start/stop flags
 	- the rest condensing i'm doing makes tuples less straight-forward
+- make sure flam element has the correct surface for snare shots, and other
+- pan: basses spread from right to left; snares center?; tenors right?
 
 
 Bah
