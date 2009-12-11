@@ -678,6 +678,97 @@ class Parser:
 			self.accept('dynamic')
 			return ret
 
+	def condense(self, score):
+		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
+
+		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
+		# 32 32 32 32rest 32 32 32 32
+		# should become
+		# 32 32 16 32 32 32 32
+
+		# for tenors, merge flam notes together
+
+		# expand unison surface into simultaneous based on number of basses?
+
+		# if timeSignature per measure is not specified, deduce into x/4
+		basses = 'abcdef'
+		if 'basses' in score:
+			unison = basses[0: int(score['basses']) ]
+		else:
+			unison = basses[0:5]
+
+		# annotate with durations
+		for (instrument,music) in score['instruments'].items():
+			dynamic = False 
+			dynamicChange = False
+			for measure in music:
+				for beat in measure['beats']:
+					# fix tenor flams
+					if instrument == 'tenor':
+						i = 0
+						z = len(beat)
+						# the note with the flam flag will have the modifiers we want
+						while i < z: # for each note in the beat
+							note = beat[i]
+							if 'flam' in note and note['flam'] == True:
+								note['flam'] = note['surface']
+								note['surface'] = beat[ i+1 ]['surface']
+								#print('del' + str(i+1))
+								del beat[i+1]
+								z -= 1
+							else: # only advance if we didn't just delete a beat
+								i += 1
+					# end tenor-specific
+
+					# convert bass unisons to simultaneous notes
+					if instrument == 'bass':
+						for note in beat:
+							if 'surface' in note and note['surface'] == 'u':
+								# how many basses should we expand to?
+								note['surface'] = 'abcde'
+					# end bass-specific
+
+					# this is really geared toward midi output
+					# annotate with durations
+					duration = len(beat)
+					for note in beat:
+						# duration is the denominator of the fraction,
+						# how much of the beat the note owns
+						# 4 would be 1/4 of a beat, thus a 16th note
+						note['duration'] = duration
+						if not (duration == 1 or duration == 2 or duration % 4 == 0):
+							note['tuplet'] = duration
+
+					# condense rests
+					i = 0
+					z = len(beat)
+					while i < z:
+						j = i + 1
+						if not j < z:
+							i += 2
+							continue
+						a = beat[i]
+						b = beat[j]
+						if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
+							a['duration'] /= 2
+							del beat[j]
+							i -= 1
+							z -= 1
+				
+						i += 2
+					# end condense rests
+
+					# set dynamicChangeEnd
+					for note in beat:
+						if dynamicChange and 'dynamic' in note:
+							note['dynamicChangeEnd'] = True
+							dynamicChange = False
+						if 'dynamicChange' in note:
+							dynamicChange = True
+						
+
+		return score
+
  
 rules = [
 	# details
@@ -725,10 +816,8 @@ tokens = lex.scan( sys.stdin.read() )
 
 parser = Parser(tokens, settings)
 a = parser.score()
-
 # finalizes and annotates the intermediate data structure
-conv = Convertor()
-a = conv.condense(a)
+a = parser.condense(a)
 
 if 'midi' in settings:
 	out = MidiConvertor()
