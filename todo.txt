@@ -17,30 +17,21 @@
 	- we'd have to go back one note to decorate a note with endsTuplet when we hit ']'
 
 - sub-beat tuplets
-	- 16 16 [16 16 16]
+	- h[hhh]h
 
 - when compiling for midi output
 	- add tap-off measure
 
-- crescendos and decrescendos
-        - starting and stopping points attached to notes
-	- don't need a dynamic to start a descrescendo/crescendo, but when in progress, a dynamic specifier STOPS it
-	- but what if a cresc stops and a decre begins on the same note?
-
 - plan cymbal notation
 
 - shots on tenors
-
-- ability to specify the number of basses for unison expansion
+	- see if sample is present in soundfont
+	- have them come through in MIDI
 
 - ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
 
 - annotate measures with timeSignature if one wasn't parsed
 	- use beats in measure over 4 as default
-
-- simultaneous notes become condensed in the surface string, rather than an array of other notes
-	- because there's no need to allow simultaneous notes to have different dynamic settings (not possible on sheet music)
-	- make lilypond output understand this
 
 - if i'm going to output my own midi
 	MICROSECONDS_PER_MINUTE = 60000000
@@ -50,7 +41,7 @@
 	128 velocity is max volume
 
 - midi output
-	- calculate and hardcode volume levels in score for dynamic ranges
+	- calculate and hardcode volume levels in score for crescendos/decrescendos
 
 - ui
 	- oh boy. i thought about how helpful it'd be to have a tool that allowed me to view/edit a score, and play back a measure at a time, or more easily start at a certain measure rather than having to fast-forward through wav files.
@@ -78,7 +69,19 @@ Done:
 - pan: basses spread from right to left; snares center?; tenors right?
 - update lilypond output to work with multiple surfaces
 - lilypond time signature
+- tuplet flags are so much more sane now
+- crescendos and decrescendos
+- simultaneous notes become condensed in the surface string, rather than an array of other notes
+	- because there's no need to allow simultaneous notes to have different dynamic settings (not possible on sheet music)
+	- make lilypond output understand this
 
+        - starting and stopping points attached to notes
+	- don't need a dynamic to start a descrescendo/crescendo, but when in progress, a dynamic specifier STOPS it
+	- but what if a cresc stops and a decre begins on the same note?
+- ability to specify the number of basses for unison expansion
+	- you can, with the basses score detail. just pass the number, 2-6
+- parse tenor shots
+- output shots for lilypond
 
 Bah
 

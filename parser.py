@@ -535,7 +535,7 @@ class Parser:
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking', 'bassTenorSurface'].count(self.token):
+		while ['articulation','dynamic','rest','sticking', 'bassTenorSurface', 'tenorModifier'].count(self.token):
 			a = self.tenorNote()
 			if a == self.NotFound:
 				if self.debug:
@@ -614,6 +614,12 @@ class Parser:
 			if self.value == '=':
 				ret['fours'] = True
 			self.accept('articulation')
+			return ret
+
+		elif self.token == 'tenorModifier':
+			if self.value == '*': # shot
+				ret['shot'] = True
+			self.accept('tenorModifier')
 			return ret
 
 		elif self.token == 'dynamic':
@@ -798,6 +804,7 @@ rules = [
 
 	("snareSurface", r"[hHxX]"),
 	("bassTenorSurface", r"[aAbBcCdDeEuU]"),
+	("tenorModifier", r"[*]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),

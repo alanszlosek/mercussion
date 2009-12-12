@@ -347,7 +347,12 @@ class LilypondConvertor(Convertor):
 							if len(note['surface']) > 1:
 								ret += ' <<'
 							for surface in note['surface']:
-								ret += mapping[ surface ] + str(note['duration'])
+								if 'shot' in note:
+									ret += '\\override NoteHead #\'style = #\'cross '
+									ret += mapping[ surface ] + str(note['duration'])
+									ret += ' \\revert NoteHead #\'style'
+								else:
+									ret += mapping[ surface ] + str(note['duration'])
 
 								# diddle?
 								# check flag for whether to expand tremolos
