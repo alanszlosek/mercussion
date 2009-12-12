@@ -678,7 +678,7 @@ class Parser:
 			self.accept('dynamic')
 			return ret
 
-	def condense(self, score):
+	def condense(self, score, settings={}):
 		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
 
 		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
@@ -691,11 +691,13 @@ class Parser:
 		# expand unison surface into simultaneous based on number of basses?
 
 		# if timeSignature per measure is not specified, deduce into x/4
+
+		# obey basses setting
 		basses = 'abcdef'
 		if 'basses' in score:
-			unison = basses[0: int(score['basses']) ]
-		else:
-			unison = basses[0:5]
+			bassUnison = basses[0: int(score['basses']) ]
+		else: # default to 5 basses for unisons
+			bassUnison = basses[0:5]
 
 		# annotate with durations
 		for (instrument,music) in score['instruments'].items():
@@ -728,7 +730,7 @@ class Parser:
 						for note in beat:
 							if 'surface' in note and note['surface'] == 'u':
 								# how many basses should we expand to?
-								note['surface'] = 'abcde'
+								note['surface'] = bassUnison
 					# end bass-specific
 
 					# this is really geared toward midi output
@@ -784,7 +786,7 @@ class Parser:
  
 rules = [
 	# details
-	("detail", r"(author|tempo|timesignature|title|subtitle):"),
+	("detail", r"(author|basses|subtitle|tempo|timesignature|title):"),
 	# instruments
 	("instrument", r"(snare|bass|tenor|cymbal):"),
 
@@ -811,16 +813,20 @@ rules = [
  
 lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
 
-settings = {
-	'basses': 5
-}
+settings = {}
 
 # debug
 # debug2
 
 for arg in sys.argv:
 	if arg.startswith('--'): # flag
-		settings[ arg[2:] ] = True
+		# does it have an equal sign?
+		parts = arg[2:].split('=')
+		if len(parts) > 1:
+			settings[ parts[0] ] = parts[1]
+		else:
+			settings[ arg[2:] ] = True
+			
 
 tokens = lex.scan( sys.stdin.read() )
 
