@@ -234,14 +234,6 @@ class LilypondConvertor(Convertor):
 
 		ret = '\\version "2.8.7"\n'
 
-		ret += 'flam = {\n'
-		ret += '\t\\override Stem #\'length = #4\n'
-		#print('\t\\acciaccatura c\'\'8\n'
-		#print('\t\\grace c\'\'8\n'
-		ret += '\t\\appoggiatura c\'\'8 \n'
-		ret += '\t\\revert Stem #\'length\n'
-		ret += '}\n\n'
-
 		ret += '\\header {\n'
 		if 'title' in a:
 			print('title')
@@ -291,121 +283,102 @@ class LilypondConvertor(Convertor):
 				ret += '\t\\new Staff {\n'
 				#ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
-				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.60\n'
 
 				#self.beaming()
-				#print('\\time ' + self.timeSignature)
+				if 'timesignature' in a:
+					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'tenor':
 				ret += '\t% Tenor\n'
 				ret += '\t\\new Staff {\n'
 				#ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
-				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.90\n'
+				if 'timesignature' in a:
+					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'bass':
 				ret += '\t% Bass\n'
 				ret += '\t\\new Staff {\n'
 				#ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
-				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				#ret += '\t\t\\set Staff.midiMaximumVolume = #1.00\n'
+				if 'timesignature' in a:
+					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'cymbal':
 				ret += '\t% Cymbals\n'
 				ret += '\t\\new Staff {\n'
 				#ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
 				ret +='\t\t\\set Staff.instrumentName = #"Cymbals "\n'
-				#ret += '\t\t\\set Staff.midiMinimumVolume = #0.01\n'
-				#ret += '\t\t\\set Staff.midiMaximumVolume = #0.80\n'
+				if 'timesignature' in a:
+					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			ret += '\t\t\\stemUp\n'
-
-			tuplet = False
-			tupletCount = 0
 
 			iMeasure = 1
 			for measure in music:
 				beats = len(measure['beats'])
-				# output measure's time signature
+
+				# if measure has a time signature, print it
+				# but it's a bitch when doing it when a crescendo hasn't ended
+
 				for beat in measure['beats']:
-					for note2 in beat:
-						notes = []
-						if type(note2) == list:
-							#print('simul')
-							notes = note2
-							ret += '<< '
-						elif type(note2) == dict:
-							#print('note')
-							notes.append(note2)
-						
-						for note in notes:
-							# close out previous tuplet
-							if tuplet and (not 'tuplet' in note or tupletCount == note['tuplet']):
-								ret += '} '
-								tuplet = False
-								tupletCount = 0
-							# i actually think dynamics are supposed to go after notes. ugh
-							# new dynamic:
-							if 'dynamic' in note and crescendoDecrescendo:
-								# end it
-								crescendoDecrescendo = False
-								ret += '\! '
-
-							if tuplet == False and 'tuplet' in note:
-								if note['tuplet'] == 3:
-									ret += '\\times 2/3 { '
-								else:
-									ret += '\\times 4/6 { '
-								tuplet = True
-							if 'tuplet' in note and not 'rest' in note:
-								tupletCount += 1
-
-							if 'flam' in note:
-								if instrument == 'snare':
-									ret += '\\override Stem #\'length = #4 \\appoggiatura c\'\'8 \\revert Stem #\'length \stemUp '
-								else:
-									ret += '\\override Stem #\'length = #4 \\appoggiatura ' + mapping[ note['flam'] ] + '8 \\revert Stem #\'length \stemUp '
-
-
-							# note or rest?
-							if 'rest' in note:
-								ret += 'r' + str(note['duration'])
+					for note in beat:
+						if 'tupletStart' in note:
+							if note['tupletStart'] == 3:
+								ret += '\\times 2/3 { '
 							else:
-								ret += mapping[ note['surface'] ] + str(note['duration'])
+								ret += '\\times 4/6 { '
 
-							# diddle?
-							# check flag for whether to expand tremolos
-							if 'diddle' in note:
-								ret += ':' + str(note['duration'] * 2)
+						if 'dynamicChangeEnd' in note:
+							ret += '\! '
 
-							# fours?
-							if 'fours' in note:
-								ret += ':' + str(note['duration'] * 4)
 
-							if 'decrescendo' in note:
-								crescendoDecrescendo = True
-								ret += mapping['>'] + ' '
-							if 'dynamic' in note:
-								ret += mapping[ note['dynamic'] ] + ' '
-							# crescendo after the dynamic because it specifies the starting dynamic
-							if 'crescendo' in note:
-								crescendoDecrescendo = True
-								ret += mapping['<'] + ' '
+						if 'flam' in note:
+							if instrument == 'snare':
+								ret += '\\override Stem #\'length = #4 \\appoggiatura c\'\'8 \\revert Stem #\'length \stemUp '
+							elif instrument == 'tenor': # tenor flam element has surface
+								ret += '\\override Stem #\'length = #4 \\appoggiatura ' + mapping[ note['flam'] ] + '8 \\revert Stem #\'length \stemUp '
 
-							# should note be accented?
-							if 'accent' in note:
-								ret += ' \\accent'
 
-						if type(note2) == list:
-							ret += '>>'
+						# note or rest?
+						if 'rest' in note:
+							ret += 'r' + str(note['duration'])
+						else:
+							if len(note['surface']) > 1:
+								ret += ' <<'
+							for surface in note['surface']:
+								ret += mapping[ surface ] + str(note['duration'])
+
+								# diddle?
+								# check flag for whether to expand tremolos
+								if 'diddle' in note:
+									ret += ':' + str(note['duration'] * 2)
+
+								# fours?
+								if 'fours' in note:
+									ret += ':' + str(note['duration'] * 4)
+							if len(note['surface']) > 1:
+								ret += ' >>'
+
+						if 'dynamic' in note:
+							ret += mapping[ note['dynamic'] ] + ' '
+
+						if 'dynamicChange' in note:
+							ret += mapping[ note['dynamicChange'] ] + ' '
+
+						# should note be accented?
+						if 'accent' in note:
+							#ret += ' \\accent'
+							ret += ' ^>'
+
+						if 'tupletStop' in note: # last note in a tuplet
+							ret += '} '
+
 						ret += ' '
 					# end note loop
 
-				if tuplet:
-					ret += '} '
+				# end beat loop
+
 
 				ret += ' \n '
 				if iMeasure == 4:
@@ -413,10 +386,10 @@ class LilypondConvertor(Convertor):
 					iMeasure = 1
 				else:
 					iMeasure += 1
-				# end measure loop
-		
+			# end measure loop
+
 			ret += '}\n'
-		# end
+		# end instrument loop
 
 		ret += '>>\n'
 		ret += '\t\\layout {\n'

@@ -701,7 +701,10 @@ class Parser:
 		for (instrument,music) in score['instruments'].items():
 			dynamic = False 
 			dynamicChange = False
+			tupletCount = 1
 			for measure in music:
+				#if not 'timeSignature' in measure:
+				#	measure['timeSignature'] = score['timeSignature']
 				for beat in measure['beats']:
 					# fix tenor flams
 					if instrument == 'tenor':
@@ -737,7 +740,16 @@ class Parser:
 						# 4 would be 1/4 of a beat, thus a 16th note
 						note['duration'] = duration
 						if not (duration == 1 or duration == 2 or duration % 4 == 0):
-							note['tuplet'] = duration
+							if tupletCount == 1:
+								note['tupletStart'] = duration
+
+							if tupletCount == duration:
+								note['tupletStop'] = True
+								tupletCount = 1
+							else:
+								tupletCount += 1
+						else:
+							tupletCount = 1
 
 					# condense rests
 					i = 0
