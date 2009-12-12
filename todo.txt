@@ -1,13 +1,15 @@
-- update lilypond output to work with multiple surfaces
-- comments should start with # and not ;, since : denotes sticking, might mistype ; for :
+- parse simultaneous notes
 
-- make sure: [abc][abc]r (triplet) works with lilypond output
+- comments should start with # and not ;, since : denotes sticking, might mistype ; for :
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
 	- if i do my own midi output, this might be quite easy to do
 
 - flags for which instruments to output (instead of all by default)
 	- like this: --instrument snare,tenor
+
+- make sure: [abc][abc]r (triplet) works with lilypond output
+	- this is going to be tricky
 
 - interbeat tuplets
 	- arg.
@@ -19,7 +21,6 @@
 
 - when compiling for midi output
 	- add tap-off measure
-	- expand tremolos
 
 - crescendos and decrescendos
         - starting and stopping points attached to notes
@@ -51,6 +52,13 @@
 - midi output
 	- calculate and hardcode volume levels in score for dynamic ranges
 
+- ui
+	- oh boy. i thought about how helpful it'd be to have a tool that allowed me to view/edit a score, and play back a measure at a time, or more easily start at a certain measure rather than having to fast-forward through wav files.
+	- timidity can read midi from stdin, so as long as i can find a good way to cut out certain measures of music before sending it to mercussion, we're in business
+	- maybe i should start looking at the ncurses controls python has
+
+	- what if i just had some way of playing every time i saved? 
+
 Done:
 
 - explicit \break every 4 measures
@@ -68,6 +76,8 @@ Done:
 	- the rest condensing i'm doing makes tuples less straight-forward
 - make sure flam element has the correct surface for snare shots, and other
 - pan: basses spread from right to left; snares center?; tenors right?
+- update lilypond output to work with multiple surfaces
+- lilypond time signature
 
 
 Bah
