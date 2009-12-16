@@ -329,9 +329,6 @@ class LilypondConvertor(Convertor):
 							else:
 								ret += '\\times 4/6 { '
 
-						if 'dynamicChangeEnd' in note:
-							ret += '\! '
-
 
 						if 'flam' in note:
 							if instrument == 'snare':
@@ -362,19 +359,25 @@ class LilypondConvertor(Convertor):
 								# fours?
 								if 'fours' in note:
 									ret += ':' + str(note['duration'] * 4)
+
+								if 'dynamicChangeEnd' in note:
+									ret += '\! '
+
+								if 'dynamic' in note:
+									ret += mapping[ note['dynamic'] ] + ' '
+
+								if 'dynamicChange' in note:
+									ret += mapping[ note['dynamicChange'] ] + ' '
+
+								# should note be accented?
+								if 'accent' in note:
+									#ret += ' \\accent'
+									ret += ' ^>'
+								ret += ' '
+
 							if len(note['surface']) > 1:
 								ret += ' >>'
 
-						if 'dynamic' in note:
-							ret += mapping[ note['dynamic'] ] + ' '
-
-						if 'dynamicChange' in note:
-							ret += mapping[ note['dynamicChange'] ] + ' '
-
-						# should note be accented?
-						if 'accent' in note:
-							#ret += ' \\accent'
-							ret += ' ^>'
 
 						if 'tupletStop' in note: # last note in a tuplet
 							ret += '} '
