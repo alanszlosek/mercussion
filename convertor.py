@@ -125,6 +125,14 @@ class MidiConvertor(Convertor):
 								if 'diddle' in note:
 									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
 									out += c3 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+								if 'fours' in note:
+									c3 = perBeat / (note['duration'] * 4)
+									c4 = str(c1 + (c3))
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									c4 = str(c1 + c3 + c3)
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									c4 = str(c1 + c3 + c3 + c3)
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
@@ -236,7 +244,6 @@ class LilypondConvertor(Convertor):
 
 		ret += '\\header {\n'
 		if 'title' in a:
-			print('title')
 			ret += '\ttitle="' + a['title'] + '"\n'
 		if 'author' in a:
 			ret += '\tauthor="' + a['author'] + '"\n'
