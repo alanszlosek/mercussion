@@ -277,12 +277,20 @@ class Parser:
 		elif re.search(self.value, "HXRBSG"):
 			# why would value='.' be matched here?
 			ret['accent'] = True
-			ret['surface'] = self.value.lower()
+			if self.value == 'X':
+				ret['shot'] = True
+				ret['surface'] = self.value.lower()
+			else:
+				ret['surface'] = self.value.lower()
 			self.accept('snareSurface')
 			return ret
 
 		elif re.search(self.value, "hxrbsg"):
-			ret['surface'] = self.value
+			if self.value == 'x':
+				ret['shot'] = True
+				ret['surface'] = self.value
+			else:
+				ret['surface'] = self.value
 			self.accept('snareSurface')
 			return ret
 			
@@ -737,6 +745,8 @@ class Parser:
 							if 'surface' in note and note['surface'] == 'u':
 								# how many basses should we expand to?
 								note['surface'] = bassUnison
+							if 'flam' in note:
+								note['flam'] = note['surface']
 					# end bass-specific
 
 					# this is really geared toward midi output
@@ -756,27 +766,9 @@ class Parser:
 								tupletCount = 1
 							else:
 								tupletCount += 1
+							note['tuplet'] = True
 						else:
 							tupletCount = 1
-
-					# condense rests
-					i = 0
-					z = len(beat)
-					while i < z:
-						j = i + 1
-						if not j < z:
-							i += 2
-							continue
-						a = beat[i]
-						b = beat[j]
-						if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
-							a['duration'] /= 2
-							del beat[j]
-							i -= 1
-							z -= 1
-				
-						i += 2
-					# end condense rests
 
 					# set dynamicChangeEnd
 					for note in beat:
@@ -786,6 +778,25 @@ class Parser:
 						if 'dynamicChange' in note:
 							dynamicChange = True
 						
+					# condense rests
+                                        # need to skip tuplets
+                                        i = 0
+                                        z = len(beat)
+                                        while i < z:
+                                                j = i + 1
+                                                if not j < z:
+                                                        i += 2
+                                                        continue
+                                                a = beat[i]
+                                                b = beat[j]
+                                                if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
+                                                        a['duration'] /= 2
+                                                        del beat[j]
+                                                        i -= 1
+                                                        z -= 1
+
+                                                i += 2
+                                        # end condense rests
 
 		return score
 
@@ -811,7 +822,7 @@ rules = [
 
 	("simultaneous", r"\(|\)"),
 	
-	("space", r"[\t\n ]"),
+	("space", r"[\t\r\n ]"),
 	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string
 
 	#("timesignature", r"[1-9]/[1-9]")
