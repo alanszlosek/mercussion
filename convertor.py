@@ -27,10 +27,10 @@ class MidiConvertor(Convertor):
 			"tenor": "1"
 		}
 		instrumentVolumeMap = {
-			"bass": "127",
-			"cymbal": "127",
-			"snare": "100",
-			"tenor": "127"
+			"bass": 127,
+			"cymbal": 127,
+			"snare": 100,
+			"tenor": 100
 		}
 		instrumentPanMap = {
 			"bass": "30",
@@ -51,10 +51,10 @@ class MidiConvertor(Convertor):
 			"e": "d5"
 		}
 		volumeMap = {
-			"P": 32, # pianissimo
-			"M": 64, # mezzo-forte
-			"F": 95, # forte
-			"G": 127 # ff
+			"P": .40, # pianissimo
+			"M": .60, # mezzo-forte
+			"F": .80, # forte
+			"G": 1.0 # ff
 		}
 
 		if 'tempo' in score:
@@ -81,7 +81,8 @@ class MidiConvertor(Convertor):
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
 		for (instrument,music) in score['instruments'].items():
-			volume = volumeMap['M']
+			instrumentVolume = instrumentVolumeMap[ instrument ]
+			volume = int(instrumentVolume * volumeMap['F']) # start at forte
 			counter = startingCounter
 			nextBeat = counter + perBeat
 
@@ -91,7 +92,7 @@ class MidiConvertor(Convertor):
 			# map instrument to a channel
 			out += "0 PrCh ch=" + channelString + " prog=" + instrumentProgramMap[instrument] + "\n"
 			# set main track volume
-			out += "0 Par ch=" + channelString + " con=7 val=" + instrumentVolumeMap[instrument] + "\n"
+			out += "0 Par ch=" + channelString + " con=7 val=" + str(volume) + "\n"
 			out += "0 Par ch=" + channelString + " con=10 val=" + instrumentPanMap[instrument] + "\n"
 
                         for measure in music:
@@ -106,12 +107,13 @@ class MidiConvertor(Convertor):
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
-								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(volumeMap['P']) + "\n"
+								tempVolume = int(instrumentVolume * volumeMap['P'])
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
 							# prepare volume
 							if 'dynamic' in note:
-								volume = volumeMap[ note['dynamic'] ]
+								volume = int(instrumentVolume * volumeMap[ note['dynamic'] ])
 							tempVolume = volume
 							if 'accent' in note:
 								tempVolume += accentIncrease # go up a quarter
@@ -234,6 +236,8 @@ class LilypondConvertor(Convertor):
 							duration = note['duration'] * 4
 
 						note['duration'] = duration
+
+						# should i set shot flag here too?
 		return score
 
 	def convert(self, parsed, settings={}):
@@ -241,6 +245,7 @@ class LilypondConvertor(Convertor):
 		a = self.fixDurations(parsed)
 
 		ret = '\\version "2.8.7"\n'
+		ret += '#(set-default-paper-size "a4" \'landscape)'
 
 		ret += '\\header {\n'
 		if 'title' in a:
@@ -340,7 +345,7 @@ class LilypondConvertor(Convertor):
 						if 'flam' in note:
 							if instrument == 'snare':
 								ret += '\\override Stem #\'length = #4 \\appoggiatura c\'\'8 \\revert Stem #\'length \stemUp '
-							elif instrument == 'tenor': # tenor flam element has surface
+							else: # tenor and bass flam element has surface
 								ret += '\\override Stem #\'length = #4 \\appoggiatura ' + mapping[ note['flam'] ] + '8 \\revert Stem #\'length \stemUp '
 
 
@@ -354,7 +359,6 @@ class LilypondConvertor(Convertor):
 								if 'shot' in note:
 									ret += '\\override NoteHead #\'style = #\'cross '
 									ret += mapping[ surface ] + str(note['duration'])
-									ret += ' \\revert NoteHead #\'style'
 								else:
 									ret += mapping[ surface ] + str(note['duration'])
 
@@ -380,6 +384,10 @@ class LilypondConvertor(Convertor):
 								if 'accent' in note:
 									#ret += ' \\accent'
 									ret += ' ^>'
+
+								if 'shot' in note:
+									ret += ' \\revert NoteHead #\'style'
+
 								ret += ' '
 
 							if len(note['surface']) > 1:
@@ -397,7 +405,7 @@ class LilypondConvertor(Convertor):
 
 				ret += ' \n '
 				if iMeasure == 4:
-					ret += ' \\break '
+					#ret += ' \\break \n '
 					iMeasure = 1
 				else:
 					iMeasure += 1
