@@ -796,7 +796,7 @@ class Parser:
                                                         z -= 1
 
                                                 i += 2
-                                        # end condense rests
+					# end condense rests
 
 		return score
 
