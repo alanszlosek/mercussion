@@ -53,8 +53,11 @@ class Parser:
 			self.token = self.value = False
 			self.die('Unknown token')
 			return False
+
 		if self.debug:
 			sys.stderr.write('At ' + self.token + ':' + self.value + "\n")
+		if self.token == 'comment':
+			return self.next()
 		return True
 
 
@@ -802,6 +805,7 @@ class Parser:
 
  
 rules = [
+	("comment", r"#.*"),
 	# details
 	("detail", r"(author|basses|subtitle|tempo|timesignature|title):"),
 	# instruments
