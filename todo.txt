@@ -1,7 +1,5 @@
 - parse simultaneous notes
 
-- comments should start with # and not ;, since : denotes sticking, might mistype ; for :
-
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
 	- if i do my own midi output, this might be quite easy to do
 
@@ -42,6 +40,7 @@
 
 - midi output
 	- calculate and hardcode volume levels in score for crescendos/decrescendos
+		- determine number of beats between start and stop. set perBeatAdjustment, and the further divide the perBeatAdjustment by the amount of notes in the beat to get the perNoteAdjustment
 
 - ui
 	- oh boy. i thought about how helpful it'd be to have a tool that allowed me to view/edit a score, and play back a measure at a time, or more easily start at a certain measure rather than having to fast-forward through wav files.
@@ -82,6 +81,7 @@ Done:
 	- you can, with the basses score detail. just pass the number, 2-6
 - parse tenor shots
 - output shots for lilypond
+- comments should start with # and not ;, since : denotes sticking, might mistype ; for :
 
 Bah
 
