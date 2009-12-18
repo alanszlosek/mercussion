@@ -44,7 +44,9 @@ tenorModifiers: tenorModifier tenorModifiers | tenorModifier
 
 tenorModifier: dynamicModifier | [,-=*]
 
-tenorSurface: [aAbBcCdDeEuU] | rest
+tenorSurface: '(' tenorSurfaces ') | tenorSurface2
+tenorSurface2: [aAbBcCdDeEfF]
+tenorSurfaces: tenorSurface2 tenorSurfaces | tenorSurface2
 
 
 // bass
