@@ -521,7 +521,7 @@ class Parser:
 
 	def tenorMeasure(self):
 		if self.debug:
-			sys.stderr.write('In measure()\n')
+			sys.stderr.write('In tenorMeasure()\n')
 
 		# returns a measure structure
 		ret = {
@@ -546,7 +546,7 @@ class Parser:
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking', 'bassTenorSurface', 'tenorModifier'].count(self.token):
+		while ['articulation','dynamic','rest','sticking', 'simultaneousA', 'bassTenorSurface', 'tenorModifier'].count(self.token):
 			a = self.tenorNote()
 			if a == self.NotFound:
 				if self.debug:
@@ -606,40 +606,26 @@ class Parser:
 			sys.stderr.write('In tenorModifiers()\n')
 		ret = {}
 		
-		while 1:
-			a = self.tenorModifier()
-			if a == self.NotFound: # no modifiers, or no more modifiers
-				break
-			ret.update(a)
+		while ['articulation','dynamic','tenorModifier'].count(self.token):
+			if self.token == 'articulation':
+				if self.value == ',':
+					ret['flam'] = True
+				if self.value == '-':
+					ret['diddle'] = True
+				if self.value == '=':
+					ret['fours'] = True
+				self.accept('articulation')
+
+			elif self.token == 'tenorModifier':
+				if self.value == '*': # shot
+					ret['shot'] = True
+				self.accept('tenorModifier')
+
+			elif self.token == 'dynamic':
+				a = self.dynamicModifier()
+				ret.update(a)
+
 		return ret
-
-	def tenorModifier(self):
-		if self.debug:
-			sys.stderr.write('In tenorModifier()\n')
-		ret = {}
-		if self.token == 'articulation':
-			if self.value == ',':
-				ret['flam'] = True
-			if self.value == '-':
-				ret['diddle'] = True
-			if self.value == '=':
-				ret['fours'] = True
-			self.accept('articulation')
-			return ret
-
-		elif self.token == 'tenorModifier':
-			if self.value == '*': # shot
-				ret['shot'] = True
-			self.accept('tenorModifier')
-			return ret
-
-		elif self.token == 'dynamic':
-			return self.dynamicModifier()
-
-		else:
-			if self.debug:
-				sys.stderr.write('No modifier or no more\n')
-			return self.NotFound
 
 	def tenorSurface(self):
 		if self.debug:
@@ -652,7 +638,20 @@ class Parser:
 			self.accept('rest')
 			return ret
 
-		elif re.search(self.value, "ABCDEFU"):
+		elif self.token == 'simultaneousA':
+			self.accept('simultaneousA')
+			ret = self.tenorSurfaces()
+			self.accept('simultaneousB')
+			return ret
+
+		else:
+			return self.tenorSurface2()
+
+	def tenorSurface2(self):
+		if self.debug:
+			sys.stderr.write('In tenorSurface2()\n')
+		ret = {}
+		if re.search(self.value, "ABCDEFU"):
 			ret['accent'] = True
 			ret['surface'] = self.value.lower()
 			self.accept('bassTenorSurface')
@@ -665,6 +664,22 @@ class Parser:
 			
 		else: # should only get here if there's an error
 			return self.NotFound
+
+	def tenorSurfaces(self):
+		if self.debug:
+			sys.stderr.write('In tenorSurfaces()\n')
+		ret = {}
+		while self.token == 'bassTenorSurface':
+			a = self.tenorSurface2()
+			if 'surface' in ret:
+				surface = ret['surface']
+			else:
+				surface = ''
+			if 'surface' in a:
+				surface = surface + a['surface']
+			ret.update(a)
+			ret['surface'] = surface
+		return ret
 
 
 	def sticking(self):
@@ -818,13 +833,15 @@ rules = [
 	("articulation", r"[,=-]"),
 
 	("snareSurface", r"[hHxX]"),
-	("bassTenorSurface", r"[aAbBcCdDeEuU]"),
+	("bassTenorSurface", r"[aAbBcCdDeEfFuU]"),
+	("tenorSurface", r"[aAbBcCdDeEfF]"),
 	("tenorModifier", r"[*]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
 
-	("simultaneous", r"\(|\)"),
+	("simultaneousA", r"\("),
+	("simultaneousB", r"\)"),
 	
 	("space", r"[\t\r\n ]"),
 	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string
