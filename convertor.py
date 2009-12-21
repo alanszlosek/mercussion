@@ -402,10 +402,13 @@ class LilypondConvertor(Convertor):
 
 				# end beat loop
 
+				if len(measure['beats']) > 1:
+					ret += ' | '
 
 				ret += ' \n '
 				if iMeasure == 4:
-					#ret += ' \\break \n '
+					if len(measure['beats']) > 1:
+						ret += ' \\break \n '
 					iMeasure = 1
 				else:
 					iMeasure += 1
