@@ -49,9 +49,9 @@ class Parser:
 				sys.stderr.write('No more\n')
 			return False
 
-		except UnknownTokenError:
+		except UnknownTokenError as e:
 			self.token = self.value = False
-			self.die('Unknown token')
+			self.die( str(e) )
 			return False
 
 		if self.debug:
