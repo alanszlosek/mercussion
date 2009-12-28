@@ -288,8 +288,15 @@ class LilypondConvertor(Convertor):
 		crescendoDecrescendo = False
 		dynamic = 'M'
 
-		for (instrument,music) in a['instruments'].items():
+		instruments = a['instruments']
+		instruments2 = ['snare','tenor','bass','cymbal']
 
+		for instrument in instruments2:
+			if not instrument in instruments.keys():
+				continue
+
+			music = instruments[ instrument ]
+			
 			if instrument == 'snare':
 				ret += '\t% Snare\n'
 				ret += '\t\\new Staff {\n'
