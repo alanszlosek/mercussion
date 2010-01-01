@@ -358,7 +358,7 @@ class Parser:
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking','bassTenorSurface','simultaneous'].count(self.token):
+		while ['articulation','dynamic','rest','sticking','bassTenorSurface','simultaneousA'].count(self.token):
 			a = self.bassNote()
 			if a == self.NotFound:
 				if self.debug:
@@ -449,46 +449,58 @@ class Parser:
 
 	def bassSurface(self):
 		if self.debug:
-			sys.stderr.write('In bassSurface()\n')
+			sys.stderr.write('In tenorSurface()\n')
 		ret = {}
 
-		if self.token == 'simultaneous':
-			surface = ''
-			self.accept('simultaneous')
-			while self.token == 'bassTenorSurface':
-				if re.search(self.value, "ABCDEFU"):
-					ret['accent'] = True # if any are accented, all will be
-					surface = surface + self.value.lower()
-		
-				elif re.search(self.value, "abcdefu"):
-					surface = surface + self.value
-
-				self.accept('bassTenorSurface')
-			self.accept('simultaneous')
-			ret['surface'] = surface
+		# bass tenor
+		if self.token == 'rest': #rest
+			ret['rest'] = True
+			self.accept('rest')
 			return ret
 
+		elif self.token == 'simultaneousA':
+			self.accept('simultaneousA')
+			ret = self.bassSurfaces()
+			self.accept('simultaneousB')
+			return ret
 
 		else:
-			# bass tenor
-			if self.token == 'rest': #rest
-				ret['rest'] = True
-				self.accept('rest')
-				return ret
-	
-			elif re.search(self.value, "ABCDEFU"):
-				ret['accent'] = True
-				ret['surface'] = self.value.lower()
-				self.accept('bassTenorSurface')
-				return ret
-	
-			elif re.search(self.value, "abcdefu"):
-				ret['surface'] = self.value
-				self.accept('bassTenorSurface')
-				return ret
-				
-			else: # should only get here if there's an error
-				return self.NotFound
+			return self.bassSurface2()
+
+	def bassSurface2(self):
+		if self.debug:
+			sys.stderr.write('In bassSurface2()\n')
+		ret = {}
+		if re.search(self.value, "ABCDEFU"):
+			ret['accent'] = True
+			ret['surface'] = self.value.lower()
+			self.accept('bassTenorSurface')
+			return ret
+
+		elif re.search(self.value, "abcdefu"):
+			ret['surface'] = self.value
+			self.accept('bassTenorSurface')
+			return ret
+			
+		else: # should only get here if there's an error
+			return self.NotFound
+
+	def bassSurfaces(self):
+		if self.debug:
+			sys.stderr.write('In bassSurfaces()\n')
+		ret = {}
+		while self.token == 'bassTenorSurface':
+			a = self.bassSurface2()
+			if 'surface' in ret:
+				surface = ret['surface']
+			else:
+				surface = ''
+			if 'surface' in a:
+				surface = surface + a['surface']
+			ret.update(a)
+			ret['surface'] = surface
+		return ret
+
 
 # tenor methods
 
@@ -731,7 +743,7 @@ class Parser:
 		else: # default to 5 basses for unisons
 			bassUnison = basses[0:5]
 
-		# annotate with durations
+		# annotate with durations and many other things
 		for (instrument,music) in score['instruments'].items():
 			dynamic = False 
 			dynamicChange = False
