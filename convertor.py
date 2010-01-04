@@ -1,24 +1,97 @@
+from decimal import *
+
 class Convertor:
 	def convert(self,score,settings):
 		pass
 
 class MidiConvertor(Convertor):
+
+	volumeMap = {
+		"P": .40, # pianissimo
+		"M": .60, # mezzo-forte
+		"F": .80, # forte
+		"G": 1.00 # ff
+	}
+
 	# will need to hard-code volume levels for crescendos and decrescendos
 
 	def dynamicRanges(self, score):
+		# annotate with crescendo/decrescndo rise/fall data
+		# keep track of beats and notes between change start and stopping point
+
+		# annotate each note with its beat/note index
+		# helps us with calculating volume rise and fall per note
+		start = {}
 		for (instrument,music) in score['instruments'].items():
-			dynamic = False
+			dynamic = 'M'
+			beatCount = 0
 			for measure in music:
 				for beat in measure['beats']:
+					noteCount = 0
 					for note in beat:
+						note['beatIndex'] = beatCount
+						note['noteIndex'] = noteCount
+
+						if 'dynamicChangeEnd' in note:
+							start['dynamicEndsOn'] = note
+							start = {}
+
 						if 'dynamicChange' in note:
-							dynamic = True
-							# found the start, now we need to find the end
-							# then calculate how much time would be in between
-						pass
+							start = note
+
+						noteCount += 1
+					beatCount += 1
+
+		# annotate with volumePercent
+		volumePercent = 0.60
+		for (instrument,music) in score['instruments'].items():
+			dynamic = 'M'
+			for measure in music:
+				for beat in measure['beats']:
+					volume = volumePercent
+					notes = len(beat)
+					for note in beat:
+						if 'dynamicChangeEnd' in note:
+							# stop annotating change values
+
+							# subtract startIndex from beatCount
+							# gives us the number of beats spanned by the dynamic
+
+							# use new dynamic and current/previous to figure out the dynamic
+							# different between start note and current note
+							pass
+
+						if 'dynamic' in note:
+							volumePercent = self.volumeMap[ note['dynamic'] ]
+							pass
+							
+						if 'dynamicChange' in note:
+							dynamic = note['dynamic']
+							endsOn = note['dynamicEndsOn']
+							beats = endsOn['beatIndex'] - note['beatIndex']
+							diff = self.volumeMap[ endsOn['dynamic'] ] - self.volumeMap[ dynamic ]
+
+							perBeat = diff / beats
+
+							#diff = Decimal(self.volumeMap[ note['dynamic'] ]) - Decimal(self.volumeMap[ dynamic ])
+
+						if perBeat <> 0 and not 'rest' in note:
+							# calculate and set note['volumePercent']
+							volume = volumePercent + perNote
+
+
+
+					# end note loop
+					volumePercent += perBeat
+				# end measure loop
+			# end instrument loop
+		return score
+
 
 	def convert(self, score, settings):
-		#score = self.dynamicRanges(score)
+		score = self.dynamicRanges(score)
+		print( repr(score) )
+		return ''
 
 		instrumentProgramMap = {
 			"bass": "0",
@@ -50,12 +123,6 @@ class MidiConvertor(Convertor):
 			"d": "f5",
 			"e": "d5"
 		}
-		volumeMap = {
-			"P": .40, # pianissimo
-			"M": .60, # mezzo-forte
-			"F": .80, # forte
-			"G": 1.0 # ff
-		}
 
 		if 'tempo' in score:
 			scoreTempo = int(score['tempo'])
@@ -82,7 +149,7 @@ class MidiConvertor(Convertor):
 
 		for (instrument,music) in score['instruments'].items():
 			instrumentVolume = instrumentVolumeMap[ instrument ]
-			volume = int(instrumentVolume * volumeMap['F']) # start at forte
+			volume = int(instrumentVolume * self.volumeMap['F']) # start at forte
 			counter = startingCounter
 			nextBeat = counter + perBeat
 
@@ -107,13 +174,13 @@ class MidiConvertor(Convertor):
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
-								tempVolume = int(instrumentVolume * volumeMap['P'])
+								tempVolume = int(instrumentVolume * self.volumeMap['P'])
 								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
 							# prepare volume
 							if 'dynamic' in note:
-								volume = int(instrumentVolume * volumeMap[ note['dynamic'] ])
+								volume = int(instrumentVolume * self.volumeMap[ note['dynamic'] ])
 							tempVolume = volume
 							if 'accent' in note:
 								tempVolume += accentIncrease # go up a quarter
