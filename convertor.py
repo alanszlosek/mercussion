@@ -224,6 +224,94 @@ class MidiConvertor(Convertor):
 		# end instrument loop
 		return out
 
+class MusicXMLConvertor(Convertor):
+	def convert(self, score, settings):
+		nl = "\n"
+		t = "\t"
+		t2 = t + t
+		t3 = t + t + t
+
+		noteMap = {
+			# snare
+			"h": "C5",
+			"x": "D5",
+
+			# bass and tenor
+			"a": "E5",
+			"b": "C5",
+			"c": "A4",
+			"d": "F4",
+			"e": "D4"
+		}
+
+		out = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + nl + '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + nl
+		out += '<score-partwise version="2.0">' + nl
+		out += '<part-list>' + nl
+
+		i = 1
+		for (instrument,music) in score['instruments'].items():
+			out += t + '<score-part id="P' + str(i) + '"><part-name>' + instrument + '</part-name></score-part>' + nl
+			i += 1
+		out += '</part-list>' + nl
+
+		i = 1
+		for (instrument,music) in score['instruments'].items():
+			out += '<part id="P' + str(i) + '">' + nl
+			prevTimeSignature = ''
+			iMeasure = 1
+			for measure in music:
+				ts = measure['timeSignature'].split('/')
+				out += t + '<measure number="' + str(iMeasure) + '">' + nl
+				out += t2 + '<attributes>' + nl
+				# divisions per quarter note for 1 duration
+				out += t3 + '<divisions>12</divisions>' + nl
+				out += t3 + '<key><fifths>0</fifths></key>' + nl
+				if prevTimeSignature <> measure['timeSignature']:
+					out += t3 + '<time><beats>' + str(ts[0]) + '</beats><beat-type>' + str(ts[1]) + '</beat-type></time>' + nl
+				#out += t3 + '<clef><sign>G</sign><line>2</line></clef>' + nl
+				out += t2 + '</attributes>' + nl
+				for beat in measure['beats']:
+					iNote = 1
+					for note in beat:
+						if 'rest' in note:
+							#out += t2 + '<note>' + nl
+							pass
+						else:
+							for surface in note['surface']:
+								duration = note['duration']
+								out += t2 + '<note>' + nl
+								noteMapped = noteMap[ surface ]
+								out += t3 + '<pitch><step>' + noteMapped[0] + '</step><octave>' + noteMapped[1] + '</octave></pitch>' + nl
+								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+								if duration == 3:
+									out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
+								elif duration == 6:
+									out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
+									pass
+								# '<type>whole</type>'
+								out += t3 + '<beam number="' + str(note['duration'] / 2) + '">'
+								if iNote == 1:
+									out += 'begin'
+								elif iNote == note['duration']:
+									out += 'end'
+								else:
+									out += 'continue'
+								out += '</beam>' + nl
+								out += t2 + '</note>' + nl
+						iNote += 1
+					# end note loop
+				# end beat loop
+				iMeasure += 1
+				prevTimeSignature = measure['timeSignature']
+
+				out += t + '</measure>' + nl
+			# end measure loop
+			out += '</part>' + nl
+			i += 1
+		# end instrument loop
+		out += '</score-partwise>'
+		return out
+
 class LilypondConvertor(Convertor):
 	# lilypond specific
 	# inserts flam spacers in the rest of the score

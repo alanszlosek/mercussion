@@ -154,6 +154,7 @@ class Parser:
 
 		# returns a measure structure
 		ret = {
+			# maybe we should only set timeSignature if it has changed
 			'timeSignature': '4/4',
 			'beats': []
 		}
@@ -895,6 +896,11 @@ if 'midi' in settings:
 
 elif 'lilypond' in settings:
 	out = LilypondConvertor()
+	b = out.convert(a, settings)
+	sys.stdout.write(b)
+
+elif 'musicxml' in settings:
+	out = MusicXMLConvertor()
 	b = out.convert(a, settings)
 	sys.stdout.write(b)
 
