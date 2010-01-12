@@ -1,9 +1,9 @@
 timesignature: "3/4"
 snare:
-	P<hh hh hh | M<hh hh hh | 
-	Fhh >hh hh | Mhh hh hh
+	O<hh hh hh | hh hh hh | 
+	Ghh hh hh | >hh hh hOh
 
 bass:
-	Paa bb cc | M<uu uu uu |
+	P<aa bb cc | M<uu uu uu |
 	Fuu >dd cc | Mcc aa bb
 
