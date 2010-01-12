@@ -710,12 +710,16 @@ class Parser:
 	def dynamicModifier(self):
 		ret = {}
 		if self.token == 'dynamic':
+			if self.value == 'O':
+				ret['dynamic'] = 'O'
 			if self.value == 'P':
 				ret['dynamic'] = 'P'
 			if self.value == 'M':
 				ret['dynamic'] = 'M'
 			if self.value == 'F':
 				ret['dynamic'] = 'F'
+			if self.value == 'G':
+				ret['dynamic'] = 'G'
 			if self.value == '<':
 				ret['dynamicChange'] = '<'
 			if self.value == '>':
@@ -841,11 +845,11 @@ rules = [
 
 	#modifiers
 	("startSticking", ":"),
-	("dynamic", r"[<>PMF]{1}"),
+	("dynamic", r"[<>OPMFG]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=-]"),
 
-	("snareSurface", r"[hHxX]"),
+	("snareSurface", r"[hHxXcC]"),
 	("bassTenorSurface", r"[aAbBcCdDeEfFuU]"),
 	("tenorSurface", r"[aAbBcCdDeEfF]"),
 	("tenorModifier", r"[*]"),

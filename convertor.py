@@ -5,8 +5,10 @@ class Convertor:
 		pass
 
 class MidiConvertor(Convertor):
+	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
 	volumeMap = {
+		"O": .20,
 		"P": .40, # pianissimo
 		"M": .60, # mezzo-forte
 		"F": .80, # forte
@@ -21,8 +23,13 @@ class MidiConvertor(Convertor):
 
 		# annotate each note with its beat/note index
 		# helps us with calculating volume rise and fall per note
-		start = {}
+
+
+		# along the way, annotate notes with volume percentage that aren't within a dynamic change
+		# keep track of the previous dynamic change
 		for (instrument,music) in score['instruments'].items():
+			start = {}
+			startDynamic = 'M'
 			dynamic = 'M'
 			beatCount = 0
 			for measure in music:
@@ -32,66 +39,37 @@ class MidiConvertor(Convertor):
 						note['beatIndex'] = beatCount
 						note['noteIndex'] = noteCount
 
+						if 'dynamic' in note:
+							dynamic = note['dynamic']
+
 						if 'dynamicChangeEnd' in note:
-							start['dynamicEndsOn'] = note
+							# log what we're changing to
+							# this note should have an absolute dynamic
+
+							beats = note['beatIndex'] - start['beatIndex']
+							diff = self.volumeMap[ dynamic ] - self.volumeMap[ startDynamic ]
+
+							perBeat = diff / beats
+							start['perBeat'] = perBeat # yikes, floating point sucks
+
 							start = {}
+
+						if len(start) == 0:
+							note['volumePercentage'] = self.volumeMap[ dynamic ]
 
 						if 'dynamicChange' in note:
 							start = note
+							startDynamic = dynamic
 
 						noteCount += 1
 					beatCount += 1
-
-		# annotate with volumePercent
-		volumePercent = 0.60
-		for (instrument,music) in score['instruments'].items():
-			dynamic = 'M'
-			for measure in music:
-				for beat in measure['beats']:
-					volume = volumePercent
-					notes = len(beat)
-					for note in beat:
-						if 'dynamicChangeEnd' in note:
-							# stop annotating change values
-
-							# subtract startIndex from beatCount
-							# gives us the number of beats spanned by the dynamic
-
-							# use new dynamic and current/previous to figure out the dynamic
-							# different between start note and current note
-							pass
-
-						if 'dynamic' in note:
-							volumePercent = self.volumeMap[ note['dynamic'] ]
-							pass
-							
-						if 'dynamicChange' in note:
-							dynamic = note['dynamic']
-							endsOn = note['dynamicEndsOn']
-							beats = endsOn['beatIndex'] - note['beatIndex']
-							diff = self.volumeMap[ endsOn['dynamic'] ] - self.volumeMap[ dynamic ]
-
-							perBeat = diff / beats
-
-							#diff = Decimal(self.volumeMap[ note['dynamic'] ]) - Decimal(self.volumeMap[ dynamic ])
-
-						if perBeat <> 0 and not 'rest' in note:
-							# calculate and set note['volumePercent']
-							volume = volumePercent + perNote
-
-
-
-					# end note loop
-					volumePercent += perBeat
-				# end measure loop
-			# end instrument loop
 		return score
 
 
 	def convert(self, score, settings):
 		score = self.dynamicRanges(score)
-		print( repr(score) )
-		return ''
+		#print( repr(score) )
+		#return ''
 
 		instrumentProgramMap = {
 			"bass": "0",
@@ -149,7 +127,9 @@ class MidiConvertor(Convertor):
 
 		for (instrument,music) in score['instruments'].items():
 			instrumentVolume = instrumentVolumeMap[ instrument ]
-			volume = int(instrumentVolume * self.volumeMap['F']) # start at forte
+			volume = self.volumeMap['F'] # start at forte
+			volumePerBeat = 0
+			volumePerNote = 0
 			counter = startingCounter
 			nextBeat = counter + perBeat
 
@@ -159,12 +139,15 @@ class MidiConvertor(Convertor):
 			# map instrument to a channel
 			out += "0 PrCh ch=" + channelString + " prog=" + instrumentProgramMap[instrument] + "\n"
 			# set main track volume
-			out += "0 Par ch=" + channelString + " con=7 val=" + str(volume) + "\n"
+			out += "0 Par ch=" + channelString + " con=7 val=" + str(instrumentVolume) + "\n"
 			out += "0 Par ch=" + channelString + " con=10 val=" + instrumentPanMap[instrument] + "\n"
 
                         for measure in music:
                                 for beat in measure['beats']:
 					c1 = counter
+					volume += volumePerBeat
+					notes = len(beat) # need to only count actual notes, not rests
+
 					for note in beat:
 						c2 = str(c1)
 						if 'rest' in note:
@@ -179,29 +162,39 @@ class MidiConvertor(Convertor):
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
 							# prepare volume
-							if 'dynamic' in note:
-								volume = int(instrumentVolume * self.volumeMap[ note['dynamic'] ])
-							tempVolume = volume
+							if 'volumePercentage' in note:
+								volume = note['volumePercentage']
+								tempVolume = volume
+
+							if volumePerNote <> 0:
+								tempVolume += volumePerNote
+
+							if 'perBeat' in note:
+								volumePerBeat = note['perBeat']
+								volumePerNote = volumePerBeat / notes
+
 							if 'accent' in note:
-								tempVolume += accentIncrease # go up a quarter
-								if tempVolume > 127:
-									tempVolume = 127
+								actualVolume = int(instrumentVolume * tempVolume) + accentIncrease
+								if actualVolume > 127:
+									actualVolume = 127
+							else:
+								actualVolume = int(instrumentVolume * tempVolume)
 
 							for surface in note['surface']:
-								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
 								if 'diddle' in note:
 									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
-									out += c3 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									out += c3 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 								if 'fours' in note:
 									c3 = perBeat / (note['duration'] * 4)
 									c4 = str(c1 + (c3))
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3)
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3 + c3)
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(tempVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
@@ -289,14 +282,16 @@ class MusicXMLConvertor(Convertor):
 									out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
 									pass
 								# '<type>whole</type>'
-								out += t3 + '<beam number="' + str(note['duration'] / 2) + '">'
-								if iNote == 1:
-									out += 'begin'
-								elif iNote == note['duration']:
-									out += 'end'
-								else:
-									out += 'continue'
-								out += '</beam>' + nl
+								if note['duration'] > 1:
+									out += t3 + '<stem>up</stem>' + nl
+									out += t3 + '<beam number="' + str(note['duration'] / 2) + '">'
+									if iNote == 1:
+										out += 'begin'
+									elif iNote == note['duration']:
+										out += 'end'
+									else:
+										out += 'continue'
+									out += '</beam>' + nl
 								out += t2 + '</note>' + nl
 						iNote += 1
 					# end note loop
