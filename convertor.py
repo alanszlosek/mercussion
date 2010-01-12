@@ -423,6 +423,7 @@ class LilypondConvertor(Convertor):
 			'u': 'b\'', # unison b'
 	
 			# dynamics
+			'O': '\\pp',
 			'P': '\\p',
 			'M': '\\mf',
 			'F': '\\f',
