@@ -327,7 +327,12 @@ class MidiConvertor2(Convertor):
 
 			"cymbal": {
 				"a": "111",
-				"b": "113"
+				"b": "113",
+				"c": "111",
+				"d": "113",
+				"^": "111", # taps
+				"=": "113", # slam-choke
+				"h": "121", # hihat
 			}
 		}
 
@@ -410,6 +415,10 @@ class MidiConvertor2(Convertor):
 								actualVolume = int(instrumentVolume * tempVolume)
 
 							for surface in note['surface']:
+								# SHIT looks like i might need to make simultaneous notes for cymbals be separate notes! because "a" might need to choke while "b" taps
+								# if 'choke' in note:
+								# elif 'slide' in note:
+								# elif 'tap' in note:
 								out += c2 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
@@ -746,6 +755,10 @@ class LilypondConvertor(Convertor):
 								if 'shot' in note:
 									ret += '\\override NoteHead #\'style = #\'cross '
 									ret += mapping[ surface ] + str(note['duration'])
+
+								# elif 'choke' in note:
+								# elif 'slide' in note:
+								# elif 'tap' in note:
 								else:
 									ret += mapping[ surface ] + str(note['duration'])
 

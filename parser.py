@@ -695,6 +695,201 @@ class Parser:
 		return ret
 
 
+# cymbal methods
+
+	def cymbalMusic(self):
+		if self.debug:
+			sys.stderr.write('In cymbalMusic()\n')
+		# returns an array of measures
+		ret = []
+
+		while 1:
+			a = self.cymbalMeasure()
+
+			if a != self.NotFound:
+				ret.append(a)
+			else:
+				break
+
+			while self.token == 'space':
+				self.accept('space')
+			if self.token != 'pipe':
+				break
+			else:
+				if not self.accept('pipe'):
+					break
+			while self.token == 'space':
+				self.accept('space')
+		if len(ret) == 0:
+			return self.NotFound
+		return ret
+
+	def cymbalMeasure(self):
+		if self.debug:
+			sys.stderr.write('In measure()\n')
+
+		# returns a measure structure
+		ret = {
+			'timeSignature': '4/4',
+			'beats': []
+		}
+		while 1:
+			a = self.cymbalBeat()
+			if len(a) == 0:
+				break
+			ret['beats'].append(a)
+			while self.token == 'space':
+				self.accept('space')
+
+		if len( ret['beats'] ) == 0:
+			return self.NotFound
+		return ret
+
+	def cymbalBeat(self):
+		if self.debug:
+			sys.stderr.write('In cymbalBeat()\n')
+		# returns an array of notes
+		ret = []
+		# need to add simultaneous and other tokens
+		while ['articulation','dynamic','rest','bassTenorSurface','simultaneousA'].count(self.token):
+			a = self.cymbalNote()
+			if a == self.NotFound:
+				if self.debug:
+					sys.stderr.write('NotFound from cymbalNote()\n')
+				break
+			else:
+				ret.append(a)
+
+		return ret
+
+	def cymbalNote(self):
+		if self.debug:
+			sys.stderr.write('In cymbalNote()\n')
+		# returns a note structure
+		# this is just a sample of the structure, elements will not be present unless they have a value
+		ret = {
+			#'accent': False,
+			#'diddle': False,
+			#'dynamic': False,
+			#'dynamicChange': '>' or '<'
+			#'dynamicChangeEnd': False,
+			#'flam': False,
+			#'flamRest': False,
+			#'fours': False,
+			#'highAccent': False,
+			#'notes': [],
+			#'rest': False,
+			#'sticking': False,
+			#'surface': False
+		}
+		
+		a = self.cymbalModifiers()
+		ret.update(a)
+		a = self.cymbalSurface()
+
+		if a == self.NotFound: # if no surface, probably an error
+			return self.NotFound
+			#self.die('Should have caught this error in surfaceNote()')
+		else:
+			ret.update(a)
+		return ret
+
+	def cymbalModifiers(self):
+		if self.debug:
+			sys.stderr.write('In cymbalModifiers()\n')
+		ret = {}
+		
+		while 1:
+			a = self.cymbalModifier()
+			if a == self.NotFound: # no modifiers, or no more modifiers
+				break
+			ret.update(a)
+		return ret
+
+	def cymbalModifier(self):
+		if self.debug:
+			sys.stderr.write('In cymbalModifier()\n')
+		ret = {}
+		if self.token == 'articulation':
+			if self.value == '-':
+				ret['diddle'] = True
+			if self.value == '=':
+				ret['fours'] = True
+			self.accept('articulation')
+			return ret
+
+		elif self.token == 'cymbalModifier':
+			if self.value == '^': # taps
+				ret['tap'] = True
+			if self.value == '!': # choke
+				ret['choke'] = True
+			if self.value == '~': # slide
+				ret['slide'] = True
+			return ret
+
+		elif self.token == 'dynamic':
+			return self.dynamicModifier()
+
+		else:
+			if self.debug:
+				sys.stderr.write('No modifier or no more\n')
+			return self.NotFound
+
+	def cymbalSurface(self):
+		if self.debug:
+			sys.stderr.write('In cymbalSurface()\n')
+		ret = {}
+
+		# bass tenor
+		if self.token == 'rest': #rest
+			ret['rest'] = True
+			self.accept('rest')
+			return ret
+
+		elif self.token == 'simultaneousA':
+			self.accept('simultaneousA')
+			ret = self.cymbalSurfaces()
+			self.accept('simultaneousB')
+			return ret
+
+		else:
+			return self.cymbalSurface2()
+
+	def cymbalSurface2(self):
+		if self.debug:
+			sys.stderr.write('In cymbalSurface2()\n')
+		ret = {}
+		if re.search(self.value, "ABCDEFU"):
+			ret['accent'] = True
+			ret['surface'] = self.value.lower()
+			self.accept('bassTenorSurface')
+			return ret
+
+		elif re.search(self.value, "abcdefu"):
+			ret['surface'] = self.value
+			self.accept('bassTenorSurface')
+			return ret
+			
+		else: # should only get here if there's an error
+			return self.NotFound
+
+	def cymbalSurfaces(self):
+		if self.debug:
+			sys.stderr.write('In cymbalSurfaces()\n')
+		ret = {}
+		while self.token == 'bassTenorSurface':
+			a = self.cymbalSurface2()
+			if 'surface' in ret:
+				surface = ret['surface']
+			else:
+				surface = ''
+			if 'surface' in a:
+				surface = surface + a['surface']
+			ret.update(a)
+			ret['surface'] = surface
+		return ret
+
+
 	def sticking(self):
 		ret = []
 		while self.token == 'sticking' or self.token == 'rest':
@@ -851,8 +1046,8 @@ rules = [
 
 	("snareSurface", r"[hHxXsS]"),
 	("bassTenorSurface", r"[aAbBcCdDeEfFuU]"),
-	("tenorSurface", r"[aAbBcCdDeEfF]"),
 	("tenorModifier", r"[*]"),
+	("cymbalModifier", r"[~^!]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
