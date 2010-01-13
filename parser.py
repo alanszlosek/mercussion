@@ -849,7 +849,7 @@ rules = [
 	("sticking", r"[rl]"),
 	("articulation", r"[,=-]"),
 
-	("snareSurface", r"[hHxXcC]"),
+	("snareSurface", r"[hHxXsS]"),
 	("bassTenorSurface", r"[aAbBcCdDeEfFuU]"),
 	("tenorSurface", r"[aAbBcCdDeEfF]"),
 	("tenorModifier", r"[*]"),
@@ -895,6 +895,11 @@ a = parser.condense(a)
 
 if 'midi' in settings:
 	out = MidiConvertor()
+	b = out.convert(a, settings)
+	sys.stdout.write(b)
+
+elif 'midi2' in settings:
+	out = MidiConvertor2()
 	b = out.convert(a, settings)
 	sys.stdout.write(b)
 

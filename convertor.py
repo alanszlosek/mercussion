@@ -217,6 +217,235 @@ class MidiConvertor(Convertor):
 		# end instrument loop
 		return out
 
+class MidiConvertor2(Convertor):
+	# does noteOff affect the output at all? test again, because i might need it for cymbals
+
+	volumeMap = {
+		"O": .20,
+		"P": .40, # pianissimo
+		"M": .60, # mezzo-forte
+		"F": .80, # forte
+		"G": 1.00 # ff
+	}
+
+	# will need to hard-code volume levels for crescendos and decrescendos
+
+	def dynamicRanges(self, score):
+		# annotate with crescendo/decrescndo rise/fall data
+		# keep track of beats and notes between change start and stopping point
+
+		# annotate each note with its beat/note index
+		# helps us with calculating volume rise and fall per note
+
+
+		# along the way, annotate notes with volume percentage that aren't within a dynamic change
+		# keep track of the previous dynamic change
+		for (instrument,music) in score['instruments'].items():
+			start = {}
+			startDynamic = 'M'
+			dynamic = 'M'
+			beatCount = 0
+			for measure in music:
+				for beat in measure['beats']:
+					noteCount = 0
+					for note in beat:
+						note['beatIndex'] = beatCount
+						note['noteIndex'] = noteCount
+
+						if 'dynamic' in note:
+							dynamic = note['dynamic']
+
+						if 'dynamicChangeEnd' in note:
+							# log what we're changing to
+							# this note should have an absolute dynamic
+
+							beats = note['beatIndex'] - start['beatIndex']
+							diff = self.volumeMap[ dynamic ] - self.volumeMap[ startDynamic ]
+
+							perBeat = diff / beats
+							start['perBeat'] = perBeat # yikes, floating point sucks
+
+							start = {}
+
+						if len(start) == 0:
+							note['volumePercentage'] = self.volumeMap[ dynamic ]
+
+						if 'dynamicChange' in note:
+							start = note
+							startDynamic = dynamic
+
+						noteCount += 1
+					beatCount += 1
+		return score
+
+
+	def convert(self, score, settings):
+		score = self.dynamicRanges(score)
+		#print( repr(score) )
+		#return ''
+
+		instrumentProgramMap = {
+			"bass": "0",
+			"cymbal": "0",
+			"snare": "0",
+			"tenor": "0"
+		}
+		instrumentVolumeMap = {
+			"bass": 127,
+			"cymbal": 127,
+			"snare": 100,
+			"tenor": 110
+		}
+		instrumentPanMap = {
+			"bass": "30",
+			"cymbal": "64",
+			"snare": "64",
+			"tenor": "98"
+		}
+		noteMap = {
+			'snare': {
+				"h": "77",
+				"x": "79",
+				"s": "81" # rim/ping
+			},
+
+			'bass': {
+				"a": "69",
+				"b": "66",
+				"c": "62",
+				"d": "57",
+				"e": "53" # should be 50
+			},
+
+			'tenor': {
+				"a": "83", # 83
+				"b": "82", # 82
+				"c": "80", # 80
+				"d": "78", # 78
+				"e": "85" # 85
+			},
+
+			"cymbal": {
+				"a": "111",
+				"b": "113"
+			}
+		}
+
+		if 'tempo' in score:
+			scoreTempo = int(score['tempo'])
+			tempo = 60000000 / scoreTempo
+		else:
+			scoreTempo = 120
+			tempo = 500000
+
+		# MFile format tracks division
+		out = "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
+		# tempo track
+		out += "MTrk\n"
+		out += "0 Tempo " + str(tempo) + "\n"
+		out += "0 TimeSig 4/4 18 8\n"
+		out += "TrkEnd\n"
+
+		# set counter a second into the future for blank space padding
+
+		channel = 1
+		flamPosition = -20 # calculate based on tempo
+		accentIncrease = int(127/4)
+		perBeat = 384
+		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
+
+		for (instrument,music) in score['instruments'].items():
+			instrumentVolume = instrumentVolumeMap[ instrument ]
+			volume = self.volumeMap['F'] # start at forte
+			volumePerBeat = 0
+			volumePerNote = 0
+			counter = startingCounter
+			nextBeat = counter + perBeat
+
+			channelString = str(channel)
+	
+			out += "MTrk\n"
+			# map instrument to a channel
+			out += "0 PrCh ch=" + channelString + " prog=" + instrumentProgramMap[instrument] + "\n"
+			# set main track volume
+			out += "0 Par ch=" + channelString + " con=7 val=" + str(instrumentVolume) + "\n"
+			out += "0 Par ch=" + channelString + " con=10 val=" + instrumentPanMap[instrument] + "\n"
+
+                        for measure in music:
+                                for beat in measure['beats']:
+					c1 = counter
+					volume += volumePerBeat
+					notes = len(beat) # need to only count actual notes, not rests
+
+					for note in beat:
+						c2 = str(c1)
+						if 'rest' in note:
+							pass
+						else:
+							if 'flam' in note:
+								# if surface is shot, flams should be on the drum head
+								# annotate notes with proper flam surface
+								#go back a bit, from current counter value
+								tempVolume = int(instrumentVolume * self.volumeMap['P'])
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[instrument][ note['flam'] ] + " v=" + str(tempVolume) + "\n"
+								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[instrument][ note['surface'] ] + " v=0\n"
+							
+							# prepare volume
+							if 'volumePercentage' in note:
+								volume = note['volumePercentage']
+								tempVolume = volume
+
+							if volumePerNote <> 0:
+								tempVolume += volumePerNote
+
+							if 'perBeat' in note:
+								volumePerBeat = note['perBeat']
+								volumePerNote = volumePerBeat / notes
+
+							if 'accent' in note:
+								actualVolume = int(instrumentVolume * tempVolume) + accentIncrease
+								if actualVolume > 127:
+									actualVolume = 127
+							else:
+								actualVolume = int(instrumentVolume * tempVolume)
+
+							for surface in note['surface']:
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
+								# expand diddle/tremolo
+								# add the second note
+								if 'diddle' in note:
+									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
+									out += c3 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
+								if 'fours' in note:
+									c3 = perBeat / (note['duration'] * 4)
+									c4 = str(c1 + (c3))
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
+									c4 = str(c1 + c3 + c3)
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
+									c4 = str(c1 + c3 + c3 + c3)
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=" + str(actualVolume) + "\n"
+							# when do we turn off
+							# divide
+							c3 = str(c1 + (perBeat / note['duration']))
+							for surface in note['surface']:
+								# why do i sometimes see the note off volume at 64?
+								#out += c3 + " Off ch=" + channelString + " n=" + noteMap[instrument][ surface ] + " v=0\n"
+								pass
+
+							# i bet some cymbal notes we'll have to avoid turning off until we get an explicit choke note
+
+						c1 += (perBeat / note['duration']) # how long does this note last?
+					nextBeat += perBeat
+					counter += perBeat
+					# end note loop
+				# end beat loop
+			# end measure loop
+			out += "TrkEnd\n"
+
+			channel += 1
+		# end instrument loop
+		return out
+
 class MusicXMLConvertor(Convertor):
 	def convert(self, score, settings):
 		nl = "\n"
