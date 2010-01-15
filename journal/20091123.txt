@@ -65,9 +65,9 @@ Shots
 
 CYMBAL
 Crash
-	c for crash
+	x for crash
 Choke (stop)
-	r for rest
+	c for choke
 Chick
 	h for hi-hat
 Tap
