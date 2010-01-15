@@ -1,0 +1,12 @@
+Bah! Forgot to account for more than 1 cymbal!
+
+Modifiers
+
+no modifier - regular crash
+^ - 90 degree edge tap
+= - slam together and leave
+~ - slide choke
+! - choke a regular crash or slide-choke
+* - hihat close
+
+And pixie stix, it really would be nice to be able to type stickings as notes for snare when the surface is the drum head
