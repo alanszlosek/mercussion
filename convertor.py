@@ -456,16 +456,40 @@ class MidiConvertor2(Convertor):
 		return out
 
 class MusicXMLConvertor(Convertor):
+	durationMap = {
+		1: 'quarter',
+		2: 'eighth',
+		3: 'eighth',
+		4: '16th',
+		5: '16th',
+		6: '16th',
+		7: '16th',
+		8: '32nd'
+	}
+	beamMap = {
+		2: '1',
+		3: '1',
+		4: '2',
+		5: '2',
+		6: '2',
+		7: '2',
+		8: '3',
+	}
+	noteHeads = {
+		'x': 'x'
+	}
+
 	def convert(self, score, settings):
 		nl = "\n"
 		t = "\t"
 		t2 = t + t
 		t3 = t + t + t
+		t4 = t + t + t + t
 
 		noteMap = {
 			# snare
 			"h": "C5",
-			"x": "D5",
+			"x": "C5",
 
 			# bass and tenor
 			"a": "E5",
@@ -505,15 +529,33 @@ class MusicXMLConvertor(Convertor):
 					iNote = 1
 					for note in beat:
 						if 'rest' in note:
-							#out += t2 + '<note>' + nl
-							pass
+							duration = note['duration']
+							out += t2 + '<note>' + nl
+							out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+							out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
+							out += t3 + '<rest />'
+							if duration == 3:
+								out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
+							elif duration == 6:
+								out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
+							out += t2 + '</note>'
 						else:
+							iSurface = 1
 							for surface in note['surface']:
 								duration = note['duration']
 								out += t2 + '<note>' + nl
+
+								out += t3 + '<voice>' + str(iSurface) + '</voice>' + nl
+
 								noteMapped = noteMap[ surface ]
 								out += t3 + '<pitch><step>' + noteMapped[0] + '</step><octave>' + noteMapped[1] + '</octave></pitch>' + nl
+								if surface in self.noteHeads:
+									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
+								if 'shot' in note:
+									out += t3 + '<notehead>x</notehead>' + nl
+
 								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+								out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
 								if duration == 3:
 									out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
 								elif duration == 6:
@@ -522,7 +564,7 @@ class MusicXMLConvertor(Convertor):
 								# '<type>whole</type>'
 								if note['duration'] > 1:
 									out += t3 + '<stem>up</stem>' + nl
-									out += t3 + '<beam number="' + str(note['duration'] / 2) + '">'
+									out += t3 + '<beam number="' + self.beamMap[ note['duration'] ] + '">'
 									if iNote == 1:
 										out += 'begin'
 									elif iNote == note['duration']:
@@ -530,7 +572,18 @@ class MusicXMLConvertor(Convertor):
 									else:
 										out += 'continue'
 									out += '</beam>' + nl
+
+								out += t3 + '<notations>' + nl
+								if 'accent' in note :
+									out += t4 + '<articulations><accent placement="above" /></articulations>' + nl
+								if 'diddle' in note:
+									out += t4 + '<ornaments><tremolo type="single">1</tremolo></ornaments>' + nl
+								out += t3 + '</notations>' + nl
+								if 'sticking' in note:	
+									out += t3 + '<lyric><text>' + note['sticking'] + '</text></lyric>' + nl
+
 								out += t2 + '</note>' + nl
+								iSurface += 1
 						iNote += 1
 					# end note loop
 				# end beat loop
