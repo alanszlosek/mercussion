@@ -99,7 +99,7 @@ class MidiConvertor(Convertor):
 		}
 		instrumentVolumeMap = {
 			"bass": 127,
-			"cymbal": 127,
+			"cymbal": 80,
 			"snare": 100,
 			"tenor": 100
 		}
