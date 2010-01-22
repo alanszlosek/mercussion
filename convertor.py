@@ -65,9 +65,29 @@ class MidiConvertor(Convertor):
 					beatCount += 1
 		return score
 
+	def cymbals(self, score):
+		# convert cymbal notes with special annotations to different surfaces
+		for (instrument,music) in score['instruments'].items():
+			if not instrument == 'cymbal':
+				continue
+			for measure in music:
+				for beat in measure['beats']:
+					for note in beat:
+						if 'tap' in note:
+							note['surface'] = '^'
+						elif 'hihat' in note:
+							note['surface'] = '*'
+						elif 'surface' in note:
+							if note['surface'] == 'c' or note['surface'] == 'd':
+								note['surface'] = '@'
+							else:
+								note['surface'] = '!'
+		return score
+
 
 	def convert(self, score, settings):
 		score = self.dynamicRanges(score)
+		score = self.cymbals(score)
 		#print( repr(score) )
 		#return ''
 
@@ -99,7 +119,14 @@ class MidiConvertor(Convertor):
 			"b": "c6",
 			"c": "a5",
 			"d": "f5",
-			"e": "d5"
+			"e": "d5",
+
+			# cymbal
+			"!": "e6",
+			"@": "c6",
+			"^": "e6",
+			"*": "a5"
+			
 		}
 
 		if 'tempo' in score:
@@ -175,16 +202,18 @@ class MidiConvertor(Convertor):
 
 							if 'accent' in note:
 								actualVolume = int(instrumentVolume * tempVolume) + accentIncrease
-								if actualVolume > 127:
-									actualVolume = 127
 							else:
 								actualVolume = int(instrumentVolume * tempVolume)
+
+							if actualVolume > 127:
+								actualVolume = 127
 
 							for surface in note['surface']:
 								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
 								if 'diddle' in note:
+									# don't think diddle should be same volume!
 									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
 									out += c3 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 								if 'fours' in note:
@@ -217,6 +246,7 @@ class MidiConvertor(Convertor):
 		# end instrument loop
 		return out
 
+# for trying out another soundfont with a different instrument layout
 class MidiConvertor2(Convertor):
 	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
@@ -505,7 +535,14 @@ class MusicXMLConvertor(Convertor):
 
 		i = 1
 		for (instrument,music) in score['instruments'].items():
-			out += t + '<score-part id="P' + str(i) + '"><part-name>' + instrument + '</part-name></score-part>' + nl
+			out += t + '<score-part id="P' + str(i) + '">' + nl
+			out += t2 + '<part-name>' + instrument + '</part-name>' + nl
+			out += t2 + '<midi-instrument id="P' + str(i) + 'i">' + nl
+			out += t3 + '<midi-channel></midi-channel>' + nl
+			out += t3 + '<midi-program></midi-program>' + nl
+			out += t3 + '<midi-unpitched></midi-unpitched>' + nl
+			out += t2 + '</midi-instrument>' + nl
+			out += t + '</score-part>' + nl
 			i += 1
 		out += '</part-list>' + nl
 
@@ -520,10 +557,10 @@ class MusicXMLConvertor(Convertor):
 				out += t2 + '<attributes>' + nl
 				# divisions per quarter note for 1 duration
 				out += t3 + '<divisions>12</divisions>' + nl
-				out += t3 + '<key><fifths>0</fifths></key>' + nl
+				out += t3 + '<key><fifths>0</fifths><mode>major</mode></key>' + nl
 				if prevTimeSignature <> measure['timeSignature']:
-					out += t3 + '<time><beats>' + str(ts[0]) + '</beats><beat-type>' + str(ts[1]) + '</beat-type></time>' + nl
-				#out += t3 + '<clef><sign>G</sign><line>2</line></clef>' + nl
+					out += t3 + '<time symbol="common"><beats>' + str(ts[0]) + '</beats><beat-type>' + str(ts[1]) + '</beat-type></time>' + nl
+				out += t3 + '<clef><sign>percussion</sign></clef>' + nl
 				out += t2 + '</attributes>' + nl
 				for beat in measure['beats']:
 					iNote = 1
@@ -548,11 +585,11 @@ class MusicXMLConvertor(Convertor):
 								out += t3 + '<voice>' + str(iSurface) + '</voice>' + nl
 
 								noteMapped = noteMap[ surface ]
-								out += t3 + '<pitch><step>' + noteMapped[0] + '</step><octave>' + noteMapped[1] + '</octave></pitch>' + nl
-								if surface in self.noteHeads:
-									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
+								out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
 								if 'shot' in note:
 									out += t3 + '<notehead>x</notehead>' + nl
+								elif surface in self.noteHeads:
+									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
 
 								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
 								out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
@@ -562,8 +599,8 @@ class MusicXMLConvertor(Convertor):
 									out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
 									pass
 								# '<type>whole</type>'
+								out += t3 + '<stem>up</stem>' + nl
 								if note['duration'] > 1:
-									out += t3 + '<stem>up</stem>' + nl
 									out += t3 + '<beam number="' + self.beamMap[ note['duration'] ] + '">'
 									if iNote == 1:
 										out += 'begin'
@@ -573,14 +610,16 @@ class MusicXMLConvertor(Convertor):
 										out += 'continue'
 									out += '</beam>' + nl
 
-								out += t3 + '<notations>' + nl
+								if 'accent' in note or 'diddle' in note:
+									out += t3 + '<notations>' + nl
 								if 'accent' in note :
 									out += t4 + '<articulations><accent placement="above" /></articulations>' + nl
 								if 'diddle' in note:
 									out += t4 + '<ornaments><tremolo type="single">1</tremolo></ornaments>' + nl
-								out += t3 + '</notations>' + nl
+								if 'accent' in note or 'diddle' in note:
+									out += t3 + '</notations>' + nl
 								if 'sticking' in note:	
-									out += t3 + '<lyric><text>' + note['sticking'] + '</text></lyric>' + nl
+									out += t3 + '<lyric placement="below"><text>' + note['sticking'] + '</text></lyric>' + nl
 
 								out += t2 + '</note>' + nl
 								iSurface += 1
