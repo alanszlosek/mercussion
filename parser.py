@@ -751,7 +751,7 @@ class Parser:
 		# returns an array of notes
 		ret = []
 		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','bassTenorSurface','simultaneousA'].count(self.token):
+		while ['articulation','dynamic','rest','bassTenorSurface','simultaneousA', 'tenorModifier','cymbalModifier'].count(self.token):
 			a = self.cymbalNote()
 			if a == self.NotFound:
 				if self.debug:
@@ -810,21 +810,19 @@ class Parser:
 		if self.debug:
 			sys.stderr.write('In cymbalModifier()\n')
 		ret = {}
-		if self.token == 'articulation':
-			if self.value == '-':
-				ret['diddle'] = True
-			if self.value == '=':
-				ret['fours'] = True
-			self.accept('articulation')
-			return ret
-
-		elif self.token == 'cymbalModifier':
+		if self.token == 'tenorModifier' or self.token == 'cymbalModifier':
 			if self.value == '^': # taps
 				ret['tap'] = True
+				self.accept('cymbalModifier')
 			if self.value == '!': # choke
 				ret['choke'] = True
+				self.accept('cymbalModifier')
 			if self.value == '~': # slide
 				ret['slide'] = True
+				self.accept('cymbalModifier')
+			if self.value == '*': # hihat
+				ret['hihat'] = True
+				self.accept('tenorModifier')
 			return ret
 
 		elif self.token == 'dynamic':
