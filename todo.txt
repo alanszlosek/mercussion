@@ -1,3 +1,15 @@
+- adjust instrument volumes by testing pp and ff
+	- can't hear tenors over basses at pp versus p
+
+- musicxml
+	- title, author, copyright
+	- instrument names
+	- flams
+	- unisons
+	- dynamic changes
+
+- push dynamics to lilypond even on rest notes
+
 - parse simultaneous notes
 
 - ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
@@ -8,11 +20,13 @@
 
 - make sure: [abc][abc]r (triplet) works with lilypond output
 	- this is going to be tricky
+	- don't think i need in-beat tuplets, just interbeat tuplets
 
 - interbeat tuplets
 	- arg.
 	- what if we simply set a flag when we hit '[': startsTuplet
 	- we'd have to go back one note to decorate a note with endsTuplet when we hit ']'
+	h h 2[hhhhh:rrrll hhhhh:rrrll h] | h
 
 - sub-beat tuplets
 	- h[hhh]h

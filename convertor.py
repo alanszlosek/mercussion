@@ -104,10 +104,10 @@ class MidiConvertor(Convertor):
 			"tenor": 100
 		}
 		instrumentPanMap = {
-			"bass": "30",
+			"bass": "64", # 30
 			"cymbal": "64",
 			"snare": "64",
-			"tenor": "98"
+			"tenor": "64" # 98
 		}
 		noteMap = {
 			# snare
@@ -505,6 +505,13 @@ class MusicXMLConvertor(Convertor):
 		7: '2',
 		8: '3',
 	}
+	dynamicMap = {
+		'O': 'pp',
+		'P': 'p',
+		'M': 'mf',
+		'F': 'f',
+		'G': 'ff'
+	}
 	noteHeads = {
 		'x': 'x'
 	}
@@ -515,6 +522,8 @@ class MusicXMLConvertor(Convertor):
 		t2 = t + t
 		t3 = t + t + t
 		t4 = t + t + t + t
+
+		instrumentOrder = ['snare','tenor','bass','cymbal']
 
 		noteMap = {
 			# snare
@@ -534,20 +543,26 @@ class MusicXMLConvertor(Convertor):
 		out += '<part-list>' + nl
 
 		i = 1
-		for (instrument,music) in score['instruments'].items():
+		for instrument in instrumentOrder:
+			if not instrument in score['instruments']:
+				continue
+			music = score['instruments'][ instrument ]
 			out += t + '<score-part id="P' + str(i) + '">' + nl
 			out += t2 + '<part-name>' + instrument + '</part-name>' + nl
-			out += t2 + '<midi-instrument id="P' + str(i) + 'i">' + nl
-			out += t3 + '<midi-channel></midi-channel>' + nl
-			out += t3 + '<midi-program></midi-program>' + nl
-			out += t3 + '<midi-unpitched></midi-unpitched>' + nl
-			out += t2 + '</midi-instrument>' + nl
+			#out += t2 + '<midi-instrument id="P' + str(i) + 'i">' + nl
+			#out += t3 + '<midi-channel></midi-channel>' + nl
+			#out += t3 + '<midi-program></midi-program>' + nl
+			#out += t3 + '<midi-unpitched></midi-unpitched>' + nl
+			#out += t2 + '</midi-instrument>' + nl
 			out += t + '</score-part>' + nl
 			i += 1
 		out += '</part-list>' + nl
 
 		i = 1
-		for (instrument,music) in score['instruments'].items():
+		for instrument in instrumentOrder:
+			if not instrument in score['instruments']:
+				continue
+			music = score['instruments'][ instrument ]
 			out += '<part id="P' + str(i) + '">' + nl
 			prevTimeSignature = ''
 			iMeasure = 1
@@ -557,10 +572,12 @@ class MusicXMLConvertor(Convertor):
 				out += t2 + '<attributes>' + nl
 				# divisions per quarter note for 1 duration
 				out += t3 + '<divisions>12</divisions>' + nl
-				out += t3 + '<key><fifths>0</fifths><mode>major</mode></key>' + nl
+				if iMeasure == 1:
+					out += t3 + '<key><fifths>0</fifths><mode>major</mode></key>' + nl
 				if prevTimeSignature <> measure['timeSignature']:
 					out += t3 + '<time symbol="common"><beats>' + str(ts[0]) + '</beats><beat-type>' + str(ts[1]) + '</beat-type></time>' + nl
-				out += t3 + '<clef><sign>percussion</sign></clef>' + nl
+				if iMeasure == 1:
+					out += t3 + '<clef><sign>percussion</sign></clef>' + nl
 				out += t2 + '</attributes>' + nl
 				for beat in measure['beats']:
 					iNote = 1
@@ -568,40 +585,69 @@ class MusicXMLConvertor(Convertor):
 						if 'rest' in note:
 							duration = note['duration']
 							out += t2 + '<note>' + nl
+							out += t3 + '<rest />' + nl
 							out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
 							out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
-							out += t3 + '<rest />'
 							if duration == 3:
 								out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
 							elif duration == 6:
 								out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
-							out += t2 + '</note>'
+
+							if note['duration'] > 1:
+								out += t3 + '<beam>'
+								if iNote == 1:
+									out += 'begin'
+								elif iNote == note['duration']:
+									out += 'end'
+								else:
+									out += 'continue'
+								out += '</beam>' + nl
+							out += t2 + '</note>' + nl
 						else:
 							iSurface = 1
 							for surface in note['surface']:
+
+								if 'dynamicChange' in note or 'dynamicChangeEnd' in note:
+									out += t2 + '<direction><direction-type><wedge type="'
+									if 'dynamicChange' in note:
+										if note['dynamicChange'] == '<':
+											out += 'crescendo'
+										else:
+											out += 'diminuendo'
+									else:
+										out += 'stop'
+									out += '">'
+									out += '</wedge></direction-type></direction>' + nl
+
 								duration = note['duration']
 								out += t2 + '<note>' + nl
 
-								out += t3 + '<voice>' + str(iSurface) + '</voice>' + nl
+								if iSurface > 1: # simultaneous notes
+									# this note is in a chord with the previous
+									out += t3 + '<chord />' + nl
 
 								noteMapped = noteMap[ surface ]
 								out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
-								if 'shot' in note:
-									out += t3 + '<notehead>x</notehead>' + nl
-								elif surface in self.noteHeads:
-									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
 
 								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+								#out += t3 + '<voice>' + str(iSurface) + '</voice>' + nl
 								out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
+
 								if duration == 3:
 									out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
 								elif duration == 6:
 									out += t3 + '<time-modification><actual-notes>6</actual-notes><normal-notes>4</normal-notes></time-modification>' + nl
 									pass
-								# '<type>whole</type>'
+
 								out += t3 + '<stem>up</stem>' + nl
+
+								if 'shot' in note:
+									out += t3 + '<notehead>x</notehead>' + nl
+								elif surface in self.noteHeads:
+									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
+
 								if note['duration'] > 1:
-									out += t3 + '<beam number="' + self.beamMap[ note['duration'] ] + '">'
+									out += t3 + '<beam>' # number="' + self.beamMap[ note['duration'] ] + '">'
 									if iNote == 1:
 										out += 'begin'
 									elif iNote == note['duration']:
@@ -610,18 +656,28 @@ class MusicXMLConvertor(Convertor):
 										out += 'continue'
 									out += '</beam>' + nl
 
-								if 'accent' in note or 'diddle' in note:
+								if duration == 3 or duration == 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
 									out += t3 + '<notations>' + nl
-								if 'accent' in note :
-									out += t4 + '<articulations><accent placement="above" /></articulations>' + nl
+
+								# for tuplet bracket, need to know whether first or last note in tuplet
+								if duration == 3:
+									#out += t4 + '<tuplet />' + nl
+								if duration == 6:
+									pass
 								if 'diddle' in note:
 									out += t4 + '<ornaments><tremolo type="single">1</tremolo></ornaments>' + nl
-								if 'accent' in note or 'diddle' in note:
+								if 'accent' in note :
+									out += t4 + '<articulations><accent placement="above"></accent></articulations>' + nl
+								if 'dynamic' in note:
+									out += t4 + '<dynamics placement="below"><' + self.dynamicMap[ note['dynamic'] ] + ' /></dynamics>' + nl
+								if duration == 3 or duration = 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
 									out += t3 + '</notations>' + nl
+
 								if 'sticking' in note:	
 									out += t3 + '<lyric placement="below"><text>' + note['sticking'] + '</text></lyric>' + nl
 
 								out += t2 + '</note>' + nl
+
 								iSurface += 1
 						iNote += 1
 					# end note loop
@@ -725,7 +781,14 @@ class LilypondConvertor(Convertor):
 		a = self.fixDurations(parsed)
 
 		ret = '\\version "2.8.7"\n'
-		ret += '#(set-default-paper-size "a4" \'landscape)'
+		#ret += '#(set-default-paper-size "a4" \'landscape)'
+		# this doesn't do enough. lilypond feels like a waste of effort.
+		ret += '\t\\paper {\n'
+		ret += '\t\tbetween-system-padding = #0.1\n'
+		ret += '\t\tbetween-system-space = #0.1\n'
+		ret += '\t\tragged-last-bottom = ##f\n'
+		ret += '\t\tragged-bottom = ##f\n'
+		ret += '\t}\n'
 
 		ret += '\\header {\n'
 		if 'title' in a:
