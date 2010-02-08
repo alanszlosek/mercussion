@@ -662,6 +662,7 @@ class MusicXMLConvertor(Convertor):
 								# for tuplet bracket, need to know whether first or last note in tuplet
 								if duration == 3:
 									#out += t4 + '<tuplet />' + nl
+									pass
 								if duration == 6:
 									pass
 								if 'diddle' in note:
@@ -670,7 +671,7 @@ class MusicXMLConvertor(Convertor):
 									out += t4 + '<articulations><accent placement="above"></accent></articulations>' + nl
 								if 'dynamic' in note:
 									out += t4 + '<dynamics placement="below"><' + self.dynamicMap[ note['dynamic'] ] + ' /></dynamics>' + nl
-								if duration == 3 or duration = 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
+								if duration == 3 or duration == 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
 									out += t3 + '</notations>' + nl
 
 								if 'sticking' in note:	
