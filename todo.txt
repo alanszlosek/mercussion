@@ -2,7 +2,6 @@
 	- can't hear tenors over basses at pp versus p
 
 - musicxml
-	- title, author, copyright
 	- instrument names
 	- flams
 	- unisons
@@ -30,11 +29,17 @@
 
 - sub-beat tuplets
 	- h[hhh]h
+	- h..hhhh..
 
 - when compiling for midi output
 	- add tap-off measure
 
 - plan cymbal notation
+	- need "stop previous event" modifiers
+
+- maybe switch from time signature at the end, to requiring it to be specified in the first measure
+	- but then we have to declare it multiple times
+	- ok, so just annotate the first measure's timeSignature if it doesn't have one and there's one in the score
 
 - shots on tenors
 	- see if sample is present in soundfont
@@ -65,6 +70,7 @@
 
 Done:
 
+- musicxml: title, author, copyright
 - explicit \break every 4 measures
 - proper clef on percussion staves
 - so i think dividing the beat into notes and then sticking is a good idea, but what you only want to specify sticking for 2 out of 6 notes in the sticking: the last two notes? period spacers? 
