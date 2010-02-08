@@ -540,6 +540,15 @@ class MusicXMLConvertor(Convertor):
 
 		out = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + nl + '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + nl
 		out += '<score-partwise version="2.0">' + nl
+		if 'title' in score:
+			out += '<work>' + nl
+			out += t + '<work-title>' + score['title'] + '</work-title>' + nl
+			out += '</work>' + nl
+		if 'author' in score:
+			out += '<identification>' + nl
+			out += t + '<creator type="composer">' + score['author'] + '</creator>' + nl
+			out += t + '<rights>Copyright 2010 ' + score['author'] + '</rights>' + nl
+			out += '</identification>' + nl
 		out += '<part-list>' + nl
 
 		i = 1
