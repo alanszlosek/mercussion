@@ -15,11 +15,14 @@ class Parser:
 	value = ''
 	tree = []
 
+	settings = {}
+
 	def __init__(self, tokens, settings={}):
 		self.tokens = tokens
 		self.token, self.value = self.tokens.next()
 		self.debug = ('debug' in settings)
 		self.debug2 = ('debug2' in settings)
+		self.settings = settings
 
 	def die(self, message):
 		sys.stderr.write(message)
@@ -93,6 +96,10 @@ class Parser:
 			if len(a) == 0:
 				break
 			else:
+				# is the current instrument name in self.settings['instruments']
+				# if 'instruments' in self.settings and instrument in self.settings['instruments']
+				# skip
+				# else
 				ret.update(a)
 		return ret
 	
@@ -155,7 +162,7 @@ class Parser:
 		# returns a measure structure
 		ret = {
 			# maybe we should only set timeSignature if it has changed
-			'timeSignature': '4/4',
+			#'timesignature': '4/4',
 			'beats': []
 		}
 		while 1: # wish we had a do..while
@@ -338,7 +345,7 @@ class Parser:
 
 		# returns a measure structure
 		ret = {
-			'timeSignature': '4/4',
+			#'timesignature': '4/4',
 			'beats': []
 		}
 		while 1:
@@ -538,7 +545,7 @@ class Parser:
 
 		# returns a measure structure
 		ret = {
-			'timeSignature': '4/4',
+			#'timesignature': '4/4',
 			'beats': []
 		}
 		while 1:
@@ -730,7 +737,7 @@ class Parser:
 
 		# returns a measure structure
 		ret = {
-			'timeSignature': '4/4',
+			#'timesignature': '4/4',
 			'beats': []
 		}
 		while 1:
@@ -946,9 +953,15 @@ class Parser:
 			dynamic = False 
 			dynamicChange = False
 			tupletCount = 1
+
+			# set time signature on first measure if not specified and score has one
+			firstMeasure = music[0]
+			if not 'timesignature' in firstMeasure and 'timesignature' in score:
+				firstMeasure['timesignature'] = score['timesignature']
+
 			for measure in music:
-				#if not 'timeSignature' in measure:
-				#	measure['timeSignature'] = score['timeSignature']
+				#if not 'timesignature' in measure:
+				#	measure['timesignature'] = score['timesignature']
 				for beat in measure['beats']:
 					# fix tenor flams
 					if instrument == 'tenor':
@@ -1075,7 +1088,9 @@ for arg in sys.argv:
 			settings[ parts[0] ] = parts[1]
 		else:
 			settings[ arg[2:] ] = True
-			
+
+if 'instruments' in settings:
+	settings['instruments'] = settings['instruments'].split(',') # might need to strip spaces or quotes
 
 tokens = lex.scan( sys.stdin.read() )
 
