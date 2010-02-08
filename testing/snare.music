@@ -1,4 +1,7 @@
+title: "Snare Test"
+author: "Alan W Szlosek Jr"
 tempo: "120"
+timesignature: "4/4"
 snare:
 	F,hh,hh:rrll -h-hXh hhhhh.h.:rlrrl.r. x:l | ,Hhhh ,-hh,X. Hhhhhh hhhH.. |
 	-H-h-H-h -h-hX. ,Hhhh ,-hHhh
