@@ -11,6 +11,8 @@ This project is getting much better! We're no longer depending on lilypond for M
 USAGE
 ====
 
+For notation examples see http://wiki.github.com/alanszlosek/mercussion/notation
+
 This will change, but for now:
 
 Print internal data structure for input:
