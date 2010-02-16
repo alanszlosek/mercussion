@@ -11,7 +11,7 @@ This project is getting much better! We're no longer depending on lilypond for M
 USAGE
 ====
 
-For notation examples see http://wiki.github.com/alanszlosek/mercussion/notation
+For notation examples see this [wiki page](http://wiki.github.com/alanszlosek/mercussion/notation)
 
 This will change, but for now:
 
