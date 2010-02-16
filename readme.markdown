@@ -5,7 +5,7 @@ This project allows tech-savvy marching percussion composers to input music FAST
 
 My marching percussion language is designed to be concise, facilitating swift input. You do not have to specify note durations; whether a note is a 16th note or an 8th note can be deduced by how many notes are present within a given beat. Beats (as in "4 beats per measure in 4/4 time") are separated by spaces.
 
-This project is getting much better! We're no longer depending on lilypond for MIDI output: we have more control; can make flams play back properly (lilypond is screwy). We could also better suited to swap out lilypond for something that creates PDFs better in the future.
+This project is getting much better! We're no longer depending on lilypond for MIDI output: we have more control; can make flams play back properly (lilypond is screwy). We are also better-situated to swap out lilypond for something that creates PDFs better in the future.
 
 
 USAGE
