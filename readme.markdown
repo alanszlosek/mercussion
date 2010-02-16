@@ -23,6 +23,6 @@ Output to lilypond format:
 
 	python parser.py --lilypond < MUSICFILE > MUSICFILE.ly
 
-Midi doesn't work natively. I make use of the midicomp project and text-based MIDI files, so you'll need to use that project for the time being:
+Midi doesn't work natively. I make use of the [midicomp project](http://midicomp.opensrc.org/) and text-based MIDI files, so you'll need to use that project for the time being:
 
 	python parser.py --midi < MUSICFILE > MUSICFILE.midi
