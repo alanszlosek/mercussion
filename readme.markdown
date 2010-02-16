@@ -23,10 +23,6 @@ Output to lilypond format:
 
 	python parser.py --lilypond < MUSICFILE > MUSICFILE.ly
 
-Output only the specified instruments:
-
-	python parser.py --musicxml --instruments snare,bass < MUSICFILE > MUSICFILE.xml
-
-Midi doesn't work natively (I make use of the midicomp project and text-based MIDI files), but when it does:
+Midi doesn't work natively. I make use of the midicomp project and text-based MIDI files, so you'll need to use that project for the time being:
 
 	python parser.py --midi < MUSICFILE > MUSICFILE.midi
