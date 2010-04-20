@@ -148,7 +148,7 @@ class MidiConvertor(Convertor):
 
 		channel = 1
 		flamPosition = -20 # calculate based on tempo
-		accentIncrease = int(127/4)
+		accentIncrease = 2 * int(127/5)
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
@@ -557,6 +557,7 @@ class MusicXMLConvertor(Convertor):
 				continue
 			music = score['instruments'][ instrument ]
 			out += t + '<score-part id="P' + str(i) + '">' + nl
+			# upper case first letters
 			out += t2 + '<part-name>' + instrument + '</part-name>' + nl
 			#out += t2 + '<midi-instrument id="P' + str(i) + 'i">' + nl
 			#out += t3 + '<midi-channel></midi-channel>' + nl
@@ -791,7 +792,7 @@ class LilypondConvertor(Convertor):
 		a = self.fixDurations(parsed)
 
 		ret = '\\version "2.8.7"\n'
-		#ret += '#(set-default-paper-size "a4" \'landscape)'
+		ret += '#(set-default-paper-size "a4" \'landscape)'
 		# this doesn't do enough. lilypond feels like a waste of effort.
 		ret += '\t\\paper {\n'
 		ret += '\t\tbetween-system-padding = #0.1\n'
@@ -847,6 +848,9 @@ class LilypondConvertor(Convertor):
 
 		for instrument in instruments2:
 			if not instrument in instruments.keys():
+				continue
+
+			if 'instruments' in settings and not instrument in settings['instruments']:
 				continue
 
 			music = instruments[ instrument ]

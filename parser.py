@@ -1090,7 +1090,7 @@ for arg in sys.argv:
 			settings[ arg[2:] ] = True
 
 if 'instruments' in settings:
-	settings['instruments'] = settings['instruments'].split(',') # might need to strip spaces or quotes
+	settings['instruments'] = map(str.strip, settings['instruments'].split(',')) # might need to strip spaces or quotes
 
 tokens = lex.scan( sys.stdin.read() )
 
