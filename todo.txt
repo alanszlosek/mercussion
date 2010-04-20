@@ -1,3 +1,6 @@
+- parse time signatures
+	- pain in the ass with the current regex setup. need to be able to easily define regexes, but also define a collection of regexes, for more concise code in the parser
+
 - adjust instrument volumes by testing pp and ff
 	- can't hear tenors over basses at pp versus p
 
@@ -8,14 +11,6 @@
 	- dynamic changes
 
 - push dynamics to lilypond even on rest notes
-
-- parse simultaneous notes
-
-- ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
-	- if i do my own midi output, this might be quite easy to do
-
-- flags for which instruments to output (instead of all by default)
-	- like this: --instrument snare,tenor
 
 - make sure: [abc][abc]r (triplet) works with lilypond output
 	- this is going to be tricky
@@ -102,6 +97,13 @@ Done:
 - parse tenor shots
 - output shots for lilypond
 - comments should start with # and not ;, since : denotes sticking, might mistype ; for :
+- ability to insert a beat of rests before tapoff when compiling for midi output ... some players mess up when the notes start so soon
+	- if i do my own midi output, this might be quite easy to do
+	- solution was to start at midi time of 30, rather than 0
+- parse simultaneous notes
+- flags for which instruments to output (instead of all by default)
+	- like this: --instrument snare,tenor
+
 
 Bah
 
