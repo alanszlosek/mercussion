@@ -853,7 +853,10 @@ class MusicXMLConvertor(Convertor):
 			prevTimeSignature = ''
 			iMeasure = 1
 			for measure in music:
+				if not 'timesignature' in measure:
+					measure['timesignature'] = '4/4'
 				ts = measure['timesignature'].split('/')
+
 				out += t + '<measure number="' + str(iMeasure) + '">' + nl
 				out += t2 + '<attributes>' + nl
 				# divisions per quarter note for 1 duration
@@ -908,9 +911,10 @@ class MusicXMLConvertor(Convertor):
 								if 'flam' in note:
 									noteMapped = noteMap[ note['flam'] ]
 									out += t2 + '<note>' + nl
-									out += t3 + '<grace>' + nl
-									out += t4 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
+									out += t3 + '<grace slash="no" />' + nl
+									out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
 									out += t3 + '<tie>start</tie>' + nl
+									
 									out += t2 + '</note>' + nl
 
 								duration = note['duration']
