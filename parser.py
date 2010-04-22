@@ -1106,6 +1106,11 @@ if 'midi' in settings:
 	b = out.convert(a, settings)
 	sys.stdout.write(b)
 
+elif 'vdlmidi' in settings:
+	out = VDLMidiConvertor()
+	b = out.convert(a, settings)
+	sys.stdout.write(b)
+
 elif 'midi2' in settings:
 	out = MidiConvertor2()
 	b = out.convert(a, settings)
