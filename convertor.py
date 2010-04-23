@@ -353,10 +353,10 @@ class VDLMidiConvertor(Convertor):
 		}
 		# integers so we can add and subtract
 		instrumentVolumeMap = {
-			"bass": 90,
-			"cymbal": 90,
-			"snare": 90,
-			"tenor": 90
+			"bass": 127,
+			"cymbal": 127,
+			"snare": 127,
+			"tenor": 127
 		}
 		instrumentPanMap = {
 			"bass": "64", # 30
@@ -366,31 +366,33 @@ class VDLMidiConvertor(Convertor):
 		}
 		noteMap = {
 			"snare": {
-				"h": "b4",
-				"x": "c4"
+				"h": "71", # vdl b4
+				"x": "60" # vdl c4
 			},
 
 			"tenor": {
 				# heads
-				"a": "e4",
-				"b": "c4",
-				"c": "a4",
-				"d": "f3",
+				"a": "64", # vdl e4
+				"b": "60", # vdl c4
+				"c": "57", # vdl a3
+				"d": "53", # vdl f3
 				"e": "",
+				"f": "",
 
 				# shots 
-				"a!": "f#4",
-				"b!": "c#4",
-				"c!": "a#4",
-				"d!": "f#3"
+				"a!": "66", # vdl f#4
+				"b!": "61", # vdl c#4
+				"c!": "58", # vdl a#3
+				"d!": "54", # vdl f#3
+				"e!": ""
 			},
 
 			"bass": {
-				"a": "g4",
-				"b": "e4",
-				"c": "c4",
-				"d": "a4",
-				"e": "d3"
+				"a": "g6",
+				"b": "e6",
+				"c": "c6",
+				"d": "a5",
+				"e": "d5"
 			},
 
 			"cymbal": {
