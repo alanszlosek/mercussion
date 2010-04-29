@@ -202,7 +202,7 @@ class Parser:
 			for sticking in stickings:
 				note = ret[ i ]
 				if sticking != '.':
-					note['sticking'] = stickings[i]
+					note['hand'] = stickings[i]
 				i += 1
 			
 		return ret
@@ -384,7 +384,7 @@ class Parser:
 			for sticking in stickings:
 				note = ret[ i ]
 				if sticking != '.':
-					note['sticking'] = stickings[i]
+					note['hand'] = stickings[i]
 				i += 1
 
 		return ret
@@ -584,7 +584,7 @@ class Parser:
 			for sticking in stickings:
 				note = ret[ i ]
 				if sticking != '.':
-					note['sticking'] = stickings[i]
+					note['hand'] = stickings[i]
 				i += 1
 
 		return ret

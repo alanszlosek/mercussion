@@ -323,6 +323,7 @@ class VDLMidiConvertor(Convertor):
 								note['surface'] = '*'
 							else:
 								note['surface'] = 'a'
+			# change surface for shots
 			if instrument == 'tenor':
 				for measure in music:
 					for beat in measure['beats']:
@@ -330,26 +331,35 @@ class VDLMidiConvertor(Convertor):
 							# but simultaneous
 							if 'shot' in note:
 								note['surface'] = note['surface'] + '!'
+			# change surface for rim clicks
+			if instrument == 'tenor' or instrument == 'bass':
+				for measure in music:
+					for beat in measure['beats']:
+						for note in beat:
+							if 'rim' in note:
+								note['surface'] = note['surface'].upper()
 		return score
 
 
 	def convert(self, score, settings):
 		score = self.dynamicRanges(score)
 		score = self.surfaces(score)
+		# annotate sticking
+
 		#print( repr(score) )
 		#return ''
 
 		instrumentChannelMap = {
-			"bass": "3",
-			"cymbal": "4",
+			"bass": "1",
+			"cymbal": "1",
 			"snare": "1",
-			"tenor": "2"
+			"tenor": "1"
 		}
 		instrumentProgramMap = {
-			"bass": "0",
-			"cymbal": "0",
+			"bass": "2",
+			"cymbal": "3",
 			"snare": "0",
-			"tenor": "0"
+			"tenor": "2"
 		}
 		# integers so we can add and subtract
 		instrumentVolumeMap = {
@@ -364,47 +374,61 @@ class VDLMidiConvertor(Convertor):
 			"snare": "64",
 			"tenor": "64" # 98
 		}
+		# these map to manual VirtualDrumline instruments
 		noteMap = {
 			"snare": {
-				"h": "71", # vdl b4
-				"x": "60" # vdl c4
+				"h": ["g#6","f#6"], # g#4 f#4
+				"x": ["g6","f6"] # g4 f4
+				# rim
+				#"": ["d#6","c#5"] # d#5 c#4
 			},
 
 			"tenor": {
 				# heads
-				"a": "64", # vdl e4
-				"b": "60", # vdl c4
-				"c": "57", # vdl a3
-				"d": "53", # vdl f3
-				"e": "",
-				"f": "",
+				"a": ["c6","b5"], # c4 b3
+				"b": ["a#5","a5"], # a#3 a3
+				"c": ["g#5","g5"], # g#3 g3
+				"d": ["f#5","f5"], # f#3 f3
+				"e": ["e6","d#6"], # e4 d#4
+				"f": ["d6","c#6"], # d4 c#4
 
-				# shots 
-				"a!": "66", # vdl f#4
-				"b!": "61", # vdl c#4
-				"c!": "58", # vdl a#3
-				"d!": "54", # vdl f#3
-				"e!": ""
+				# shots
+				# rims should be upper, like basses, but oh well
+				"A": ["c4","b3"], # c2 b1
+				"B": ["a#3","a3"], # a#1 a1
+				"C": ["g#3","g3"], # g#1 g1
+				"D": ["f#3","f3"], # f#1 f1
+				"E": ["e4","d#4"], # e2 d#2
+				"F": ["d4","c#4"] # d2 c#2
 			},
 
 			"bass": {
-				"a": "g6",
-				"b": "e6",
-				"c": "c6",
-				"d": "a5",
-				"e": "d5"
+				"a": ["78","d#6"], # e4 d#4
+				"b": ["d6","c#6"], # d4 c#4
+				"c": ["c6","b5"], # c4 b3
+				"d": ["a#5","a5"], # a#3 a3
+				"e": ["g#5","g5"], # g#3 g3
+				"u": ["e5","d#5"], # e3 d#3
+
+				# rims
+				"A": ["e3","d#3"], # e2 d#2
+				"B": ["d3","c#3"], # d2 c#2
+				"C": ["c3","b2"], # c2 b1
+				"D": ["a#2","a2"], # a#1 a1
+				"E": ["g#2","g2"], # g#1 g1
+				"U": ["d4","c#4"]# d3 c#3
 			},
 
 			"cymbal": {
 				# unisons
-				"a": "f#1",
-				"^": "f#1",
-				"*": "b#3",
+				"a": ["f#1"],
+				"^": ["f#1"],
+				"*": ["b#3"],
 
 				# singles
-				"1a": "f#1",
-				"1^": "f#1",
-				"1*": "b#3"
+				"1a": ["f#1"],
+				"1^": ["f#1"],
+				"1*": ["b#3"]
 			}
 		}
 
@@ -429,6 +453,7 @@ class VDLMidiConvertor(Convertor):
 		accentIncrease = 2 * int(127/5)
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
+		hand = 0
 
 		for (instrument,music) in score['instruments'].items():
 			instrumentVolume = instrumentVolumeMap[ instrument ]
@@ -458,13 +483,21 @@ class VDLMidiConvertor(Convertor):
 						if 'rest' in note:
 							pass
 						else:
+							if 'hand' in note:
+								if note['hand'] == 'r':
+									hand = 0
+								else:
+									hand = 1
+							else:
+								hand = 0
+
 							if 'flam' in note:
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
 								tempVolume = int(instrumentVolume * self.volumeMap['P'])
-								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(tempVolume) + "\n"
-								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ instrument ][ note['flam'] ][ hand ] + " v=" + str(tempVolume) + "\n"
+								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ][ hand ] + " v=0\n"
 							
 							# prepare volume
 							if 'volumePercentage' in note:
@@ -488,27 +521,27 @@ class VDLMidiConvertor(Convertor):
 
 							for surface in note['surface']:
 								# if tenor and shot, adjust mod wheel
-								out += c2 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ] + " v=" + str(actualVolume) + "\n"
+								out += c2 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
 								if 'diddle' in note:
 									# don't think diddle should be same volume!
 									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
-									out += c3 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ] + " v=" + str(actualVolume) + "\n"
+									out += c3 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 								if 'fours' in note:
 									c3 = perBeat / (note['duration'] * 4)
 									c4 = str(c1 + (c3))
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3)
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3 + c3)
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
 							for surface in note['surface']:
 								# why do i sometimes see the note off volume at 64?
-								#out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ] + " v=0\n"
+								#out += c3 + " Off ch=" + channelString + " n=" + noteMap[ surface ][ hand ] + " v=0\n"
 								pass
 
 							# i bet some cymbal notes we'll have to avoid turning off until we get an explicit choke note
@@ -915,7 +948,7 @@ class MusicXMLConvertor(Convertor):
 									out += t2 + '<note>' + nl
 									out += t3 + '<grace slash="no" />' + nl
 									out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
-									out += t3 + '<tie>start</tie>' + nl
+									out += t3 + '<tie type="start" />' + nl
 									
 									out += t2 + '</note>' + nl
 
@@ -931,7 +964,7 @@ class MusicXMLConvertor(Convertor):
 
 								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
 								if 'flam' in note: # close tie
-									out += t3 + '<tie>stop</tie>' + nl
+									out += t3 + '<tie type="stop" />' + nl
 
 								#out += t3 + '<voice>' + str(iSurface) + '</voice>' + nl
 								out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
@@ -977,8 +1010,8 @@ class MusicXMLConvertor(Convertor):
 								if duration == 3 or duration == 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
 									out += t3 + '</notations>' + nl
 
-								if 'sticking' in note:	
-									out += t3 + '<lyric placement="below"><text>' + note['sticking'] + '</text></lyric>' + nl
+								if 'hand' in note:	
+									out += t3 + '<lyric placement="below"><text>' + note['hand'] + '</text></lyric>' + nl
 
 								out += t2 + '</note>' + nl
 
