@@ -1026,8 +1026,11 @@ class MusicXMLConvertor(Convertor):
 								if duration == 3 or duration == 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
 									out += t3 + '</notations>' + nl
 
-								if 'hand' in note:	
-									out += t3 + '<lyric placement="below"><text>' + note['hand'] + '</text></lyric>' + nl
+								if 'hand' in note:
+									if 'accent' in note:
+										out += t3 + '<lyric placement="below"><text>' + note['hand'].upper() + '</text></lyric>' + nl
+									else:
+										out += t3 + '<lyric placement="below"><text>' + note['hand'] + '</text></lyric>' + nl
 
 								out += t2 + '</note>' + nl
 
