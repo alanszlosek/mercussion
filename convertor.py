@@ -312,10 +312,18 @@ class VDLMidiConvertor(Convertor):
 	def surfaces(self, score):
 		# convert cymbal notes with special annotations to different surfaces
 		for (instrument,music) in score['instruments'].items():
-			if instrument == 'cymbal':
-				for measure in music:
-					for beat in measure['beats']:
-						for note in beat:
+			for measure in music:
+				for beat in measure['beats']:
+					hand = 0
+					for note in beat:
+						if 'hand' in note:
+							if note['hand'] == 'l':
+								hand = 1
+							else:
+								hand = 0
+						note['hand2'] = hand
+						
+						if instrument == 'cymbal':
 							# but simultaneous
 							if 'tap' in note:
 								note['surface'] = '^'
@@ -324,20 +332,19 @@ class VDLMidiConvertor(Convertor):
 							else:
 								note['surface'] = 'a'
 			# change surface for shots
-			if instrument == 'tenor':
-				for measure in music:
-					for beat in measure['beats']:
-						for note in beat:
+						if instrument == 'tenor':
 							# but simultaneous
 							if 'shot' in note:
 								note['surface'] = note['surface'] + '!'
 			# change surface for rim clicks
-			if instrument == 'tenor' or instrument == 'bass':
-				for measure in music:
-					for beat in measure['beats']:
-						for note in beat:
+						if instrument == 'tenor' or instrument == 'bass':
 							if 'rim' in note:
 								note['surface'] = note['surface'].upper()
+
+						if hand == 0:
+							hand = 1
+						else:
+							hand = 0
 		return score
 
 
@@ -359,7 +366,7 @@ class VDLMidiConvertor(Convertor):
 			"bass": "2",
 			"cymbal": "3",
 			"snare": "0",
-			"tenor": "2"
+			"tenor": "1"
 		}
 		# integers so we can add and subtract
 		instrumentVolumeMap = {
@@ -403,7 +410,7 @@ class VDLMidiConvertor(Convertor):
 			},
 
 			"bass": {
-				"a": ["78","d#6"], # e4 d#4
+				"a": ["e6","d#6"], # e4 d#4
 				"b": ["d6","c#6"], # d4 c#4
 				"c": ["c6","b5"], # c4 b3
 				"d": ["a#5","a5"], # a#3 a3
@@ -453,7 +460,6 @@ class VDLMidiConvertor(Convertor):
 		accentIncrease = 2 * int(127/5)
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
-		hand = 0
 
 		for (instrument,music) in score['instruments'].items():
 			instrumentVolume = instrumentVolumeMap[ instrument ]
@@ -483,20 +489,18 @@ class VDLMidiConvertor(Convertor):
 						if 'rest' in note:
 							pass
 						else:
-							if 'hand' in note:
-								if note['hand'] == 'r':
-									hand = 0
-								else:
-									hand = 1
-							else:
-								hand = 0
+							hand = note['hand2']
 
 							if 'flam' in note:
+								if hand == 0:
+									hand2 = 1
+								else:
+									hand2 = 0
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
 								tempVolume = int(instrumentVolume * self.volumeMap['P'])
-								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ instrument ][ note['flam'] ][ hand ] + " v=" + str(tempVolume) + "\n"
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ instrument ][ note['flam'] ][ hand2 ] + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ][ hand ] + " v=0\n"
 							
 							# prepare volume
@@ -531,10 +535,22 @@ class VDLMidiConvertor(Convertor):
 								if 'fours' in note:
 									c3 = perBeat / (note['duration'] * 4)
 									c4 = str(c1 + (c3))
+									if hand == 0:
+										hand = 1
+									else:
+										hand = 0
 									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3)
+									if hand == 0:
+										hand = 1
+									else:
+										hand = 0
 									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3 + c3)
+									if hand == 0:
+										hand = 1
+									else:
+										hand = 0
 									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
 							# when do we turn off
 							# divide
@@ -1184,7 +1200,9 @@ class LilypondConvertor(Convertor):
 			if instrument == 'snare':
 				ret += '\t% Snare\n'
 				ret += '\t\\new Staff {\n'
-				#ret += '\t\t\\set Staff.midiInstrument = "electric grand"\n'
+				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				ret += '\t\t\\set Staff.clefPosition = #0\n'
+				ret += '\t\t\\numericTimeSignature\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
 
 				#self.beaming()
@@ -1194,7 +1212,9 @@ class LilypondConvertor(Convertor):
 			elif instrument == 'tenor':
 				ret += '\t% Tenor\n'
 				ret += '\t\\new Staff {\n'
-				#ret += '\t\t\\set Staff.midiInstrument = "bright acoustic"\n'
+				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				ret += '\t\t\\set Staff.clefPosition = #0\n'
+				ret += '\t\t\\numericTimeSignature\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
 				if 'timesignature' in a:
 					ret += '\t\t\\time ' + a['timesignature'] + '\n'
@@ -1202,7 +1222,9 @@ class LilypondConvertor(Convertor):
 			elif instrument == 'bass':
 				ret += '\t% Bass\n'
 				ret += '\t\\new Staff {\n'
-				#ret += '\t\t\\set Staff.midiInstrument = "acoustic grand"\n'
+				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				ret += '\t\t\\set Staff.clefPosition = #0\n'
+				ret += '\t\t\\numericTimeSignature\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
 				if 'timesignature' in a:
 					ret += '\t\t\\time ' + a['timesignature'] + '\n'
@@ -1210,8 +1232,10 @@ class LilypondConvertor(Convertor):
 			elif instrument == 'cymbal':
 				ret += '\t% Cymbals\n'
 				ret += '\t\\new Staff {\n'
-				#ret += '\t\t\\set Staff.midiInstrument = "honky-tonk"\n'
-				ret +='\t\t\\set Staff.instrumentName = #"Cymbals "\n'
+				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				ret += '\t\t\\set Staff.clefPosition = #0\n'
+				ret += '\t\t\\numericTimeSignature\n'
+				ret += '\t\t\\set Staff.instrumentName = #"Cymbals "\n'
 				if 'timesignature' in a:
 					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
