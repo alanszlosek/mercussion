@@ -983,9 +983,9 @@ class Parser:
 					# convert bass unisons to simultaneous notes
 					if instrument == 'bass':
 						for note in beat:
-							if 'surface' in note and note['surface'] == 'u':
+							#if 'surface' in note and note['surface'] == 'u':
 								# how many basses should we expand to?
-								note['surface'] = bassUnison
+							#	note['surface'] = bassUnison
 							if 'flam' in note:
 								note['flam'] = note['surface']
 					# end bass-specific
