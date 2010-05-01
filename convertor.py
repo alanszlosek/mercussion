@@ -323,14 +323,6 @@ class VDLMidiConvertor(Convertor):
 								hand = 0
 						note['hand2'] = hand
 						
-						if instrument == 'cymbal':
-							# but simultaneous
-							if 'tap' in note:
-								note['surface'] = '^'
-							elif 'hihat' in note:
-								note['surface'] = '*'
-							else:
-								note['surface'] = 'a'
 			# change surface for shots
 						if instrument == 'tenor':
 							# but simultaneous
@@ -356,12 +348,6 @@ class VDLMidiConvertor(Convertor):
 		#print( repr(score) )
 		#return ''
 
-		instrumentChannelMap = {
-			"bass": "1",
-			"cymbal": "1",
-			"snare": "1",
-			"tenor": "1"
-		}
 		instrumentProgramMap = {
 			"bass": "2",
 			"cymbal": "3",
@@ -384,20 +370,21 @@ class VDLMidiConvertor(Convertor):
 		# these map to manual VirtualDrumline instruments
 		noteMap = {
 			"snare": {
-				"h": ["g#6","f#6"], # g#4 f#4
-				"x": ["g6","f6"] # g4 f4
+				# actually, snares seem to be up another octave
+				"h": [68,66], # g#4 f#4
+				"x": [67,65] # g4 f4
 				# rim
 				#"": ["d#6","c#5"] # d#5 c#4
 			},
 
 			"tenor": {
 				# heads
-				"a": ["c6","b5"], # c4 b3
-				"b": ["a#5","a5"], # a#3 a3
-				"c": ["g#5","g5"], # g#3 g3
-				"d": ["f#5","f5"], # f#3 f3
-				"e": ["e6","d#6"], # e4 d#4
-				"f": ["d6","c#6"], # d4 c#4
+				"a": [60,59], # c4 b3
+				"b": [58,57], # a#3 a3
+				"c": [56,55], # g#3 g3
+				"d": [54,53], # f#3 f3
+				"e": [64,63], # e4 d#4
+				"f": [62,61], # d4 c#4
 
 				# shots
 				# rims should be upper, like basses, but oh well
@@ -410,12 +397,12 @@ class VDLMidiConvertor(Convertor):
 			},
 
 			"bass": {
-				"a": ["e6","d#6"], # e4 d#4
-				"b": ["d6","c#6"], # d4 c#4
-				"c": ["c6","b5"], # c4 b3
-				"d": ["a#5","a5"], # a#3 a3
-				"e": ["g#5","g5"], # g#3 g3
-				"u": ["e5","d#5"], # e3 d#3
+				"a": [64,63], # e4 d#4
+				"b": [62,61], # d4 c#4
+				"c": [60,59], # c4 b3
+				"d": [58,57], # a#3 a3
+				"e": [56,55], # g#3 g3
+				"u": [52,51], # e3 d#3
 
 				# rims
 				"A": ["e3","d#3"], # e2 d#2
@@ -428,14 +415,18 @@ class VDLMidiConvertor(Convertor):
 
 			"cymbal": {
 				# unisons
-				"a": ["f#1"],
-				"^": ["f#1"],
-				"*": ["b#3"],
+				"a": [58], # crash
+				"b": [62], # sizzle
+				"c": [60], # suck
+				"d": [70], # hihat
+				"e": [66], # edge tap
 
-				# singles
-				"1a": ["f#1"],
-				"1^": ["f#1"],
-				"1*": ["b#3"]
+				# solo 
+				"s": [34], #crash
+				"t": [38], # sizzle
+				"u": [36],
+				"v": [46], #hihat
+				"w": [42] # edge tap
 			}
 		}
 
@@ -461,6 +452,9 @@ class VDLMidiConvertor(Convertor):
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
+		channel = 1
+		transpose = 12
+
 		for (instrument,music) in score['instruments'].items():
 			instrumentVolume = instrumentVolumeMap[ instrument ]
 			volume = self.volumeMap['F'] # start at forte
@@ -469,7 +463,7 @@ class VDLMidiConvertor(Convertor):
 			counter = startingCounter
 			nextBeat = counter + perBeat
 
-			channelString = instrumentChannelMap[ instrument ]
+			channelString = str(channel)
 
 			out += "MTrk\n"
 			# map instrument to a channel
@@ -500,7 +494,7 @@ class VDLMidiConvertor(Convertor):
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
 								tempVolume = int(instrumentVolume * self.volumeMap['P'])
-								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ instrument ][ note['flam'] ][ hand2 ] + " v=" + str(tempVolume) + "\n"
+								out += str(c1 - 13) + " On ch=" + channelString + " n=" + str( transpose + noteMap[ instrument ][ note['flam'] ][ hand2 ]) + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ][ hand ] + " v=0\n"
 							
 							# prepare volume
@@ -525,13 +519,13 @@ class VDLMidiConvertor(Convertor):
 
 							for surface in note['surface']:
 								# if tenor and shot, adjust mod wheel
-								out += c2 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
+								out += c2 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
 								if 'diddle' in note:
 									# don't think diddle should be same volume!
 									c3 = str(c1 + (perBeat / (note['duration'] * 2)))
-									out += c3 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
+									out += c3 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 								if 'fours' in note:
 									c3 = perBeat / (note['duration'] * 4)
 									c4 = str(c1 + (c3))
@@ -539,19 +533,19 @@ class VDLMidiConvertor(Convertor):
 										hand = 1
 									else:
 										hand = 0
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3)
 									if hand == 0:
 										hand = 1
 									else:
 										hand = 0
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 									c4 = str(c1 + c3 + c3 + c3)
 									if hand == 0:
 										hand = 1
 									else:
 										hand = 0
-									out += c4 + " On ch=" + channelString + " n=" + noteMap[ instrument ][ surface ][ hand ] + " v=" + str(actualVolume) + "\n"
+									out += c4 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 							# when do we turn off
 							# divide
 							c3 = str(c1 + (perBeat / note['duration']))
@@ -569,6 +563,7 @@ class VDLMidiConvertor(Convertor):
 				# end beat loop
 			# end measure loop
 			out += "TrkEnd\n"
+			channel += 1
 
 		# end instrument loop
 		return out
