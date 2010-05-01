@@ -66,11 +66,19 @@ class Parser:
 
 	def score(self):
 		ret = {}
+		ret['instruments'] = ['snare','tenor','bass','cymbal']
+
+		if 'instruments' in self.settings:
+			for instrument in ret['instruments']:
+				if not instrument in self.settings['instruments']:
+					ret['instruments'].remove( instrument )
+
 		a = self.details()
 		if len(a):
 			ret.update(a)
 		a = self.instruments()
-		ret['instruments'] = a
+		if len(a):
+			ret.update(a)
 		return ret
 
 	def details(self):
@@ -949,7 +957,10 @@ class Parser:
 			bassUnison = basses[0:5]
 
 		# annotate with durations and many other things
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
 			dynamic = False 
 			dynamicChange = False
 			tupletCount = 1
@@ -983,9 +994,9 @@ class Parser:
 					# convert bass unisons to simultaneous notes
 					if instrument == 'bass':
 						for note in beat:
-							#if 'surface' in note and note['surface'] == 'u':
+							if 'surface' in note and note['surface'] == 'u':
 								# how many basses should we expand to?
-							#	note['surface'] = bassUnison
+								note['surface'] = bassUnison
 							if 'flam' in note:
 								note['flam'] = note['surface']
 					# end bass-specific

@@ -27,7 +27,11 @@ class MidiConvertor(Convertor):
 
 		# along the way, annotate notes with volume percentage that aren't within a dynamic change
 		# keep track of the previous dynamic change
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			start = {}
 			startDynamic = 'M'
 			dynamic = 'M'
@@ -67,7 +71,11 @@ class MidiConvertor(Convertor):
 
 	def cymbals(self, score):
 		# convert cymbal notes with special annotations to different surfaces
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			if not instrument == 'cymbal':
 				continue
 			for measure in music:
@@ -152,7 +160,11 @@ class MidiConvertor(Convertor):
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			instrumentVolume = instrumentVolumeMap[ instrument ]
 			volume = self.volumeMap['F'] # start at forte
 			volumePerBeat = 0
@@ -270,7 +282,11 @@ class VDLMidiConvertor(Convertor):
 
 		# along the way, annotate notes with volume percentage that aren't within a dynamic change
 		# keep track of the previous dynamic change
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			start = {}
 			startDynamic = 'M'
 			dynamic = 'M'
@@ -311,7 +327,11 @@ class VDLMidiConvertor(Convertor):
 	# tweak surfaces
 	def surfaces(self, score):
 		# convert cymbal notes with special annotations to different surfaces
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			for measure in music:
 				for beat in measure['beats']:
 					hand = 0
@@ -358,14 +378,14 @@ class VDLMidiConvertor(Convertor):
 		instrumentVolumeMap = {
 			"bass": 127,
 			"cymbal": 127,
-			"snare": 127,
-			"tenor": 127
+			"snare": 100,
+			"tenor": 120
 		}
 		instrumentPanMap = {
-			"bass": "64", # 30
-			"cymbal": "64",
-			"snare": "64",
-			"tenor": "64" # 98
+			"bass": "127", # 30
+			"cymbal": "127",
+			"snare": "127",
+			"tenor": "127" # 98
 		}
 		# these map to manual VirtualDrumline instruments
 		noteMap = {
@@ -402,15 +422,15 @@ class VDLMidiConvertor(Convertor):
 				"c": [60,59], # c4 b3
 				"d": [58,57], # a#3 a3
 				"e": [56,55], # g#3 g3
-				"u": [52,51], # e3 d#3
+				"u": [52,51] # e3 d#3
 
 				# rims
-				"A": ["e3","d#3"], # e2 d#2
-				"B": ["d3","c#3"], # d2 c#2
-				"C": ["c3","b2"], # c2 b1
-				"D": ["a#2","a2"], # a#1 a1
-				"E": ["g#2","g2"], # g#1 g1
-				"U": ["d4","c#4"]# d3 c#3
+				#"A": ["e3","d#3"], # e2 d#2
+				#"B": ["d3","c#3"], # d2 c#2
+				#"C": ["c3","b2"], # c2 b1
+				#"D": ["a#2","a2"], # a#1 a1
+				#"E": ["g#2","g2"], # g#1 g1
+				#"U": ["d4","c#4"]# d3 c#3
 			},
 
 			"cymbal": {
@@ -453,9 +473,14 @@ class VDLMidiConvertor(Convertor):
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
 		channel = 1
-		transpose = 12
+		transpose = 0
+		# 12 for making midi file to play through Kontact
 
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			instrumentVolume = instrumentVolumeMap[ instrument ]
 			volume = self.volumeMap['F'] # start at forte
 			volumePerBeat = 0
@@ -592,7 +617,11 @@ class MidiConvertor2(Convertor):
 
 		# along the way, annotate notes with volume percentage that aren't within a dynamic change
 		# keep track of the previous dynamic change
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			start = {}
 			startDynamic = 'M'
 			dynamic = 'M'
@@ -711,7 +740,11 @@ class MidiConvertor2(Convertor):
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			instrumentVolume = instrumentVolumeMap[ instrument ]
 			volume = self.volumeMap['F'] # start at forte
 			volumePerBeat = 0
@@ -845,8 +878,6 @@ class MusicXMLConvertor(Convertor):
 		t3 = t + t + t
 		t4 = t + t + t + t
 
-		instrumentOrder = ['snare','tenor','bass','cymbal']
-
 		noteMap = {
 			# snare
 			"h": "C5",
@@ -874,10 +905,11 @@ class MusicXMLConvertor(Convertor):
 		out += '<part-list>' + nl
 
 		i = 1
-		for instrument in instrumentOrder:
-			if not instrument in score['instruments']:
+		for instrument in score['instruments']:
+			if not instrument in score:
 				continue
-			music = score['instruments'][ instrument ]
+			music = score[ instrument ]
+
 			out += t + '<score-part id="P' + str(i) + '">' + nl
 			# upper case first letters
 			out += t2 + '<part-name>' + instrument + '</part-name>' + nl
@@ -891,10 +923,11 @@ class MusicXMLConvertor(Convertor):
 		out += '</part-list>' + nl
 
 		i = 1
-		for instrument in instrumentOrder:
-			if not instrument in score['instruments']:
+		for instrument in score['instruments']:
+			if not instrument in score:
 				continue
-			music = score['instruments'][ instrument ]
+			music = score[ instrument ]
+
 			out += '<part id="P' + str(i) + '">' + nl
 			prevTimeSignature = ''
 			iMeasure = 1
@@ -1107,7 +1140,11 @@ class LilypondConvertor(Convertor):
 		# tuplet flags may already be set in some cases by left/right square brackets
 
 		# 1=4, 2=8, 3=8tuplet, 4=16, 5=16tuplet, 6=16tuplet, 7=16tuplet, 8=32
-		for (instrument,music) in score['instruments'].items():
+		for instrument in score['instruments']:
+			if not instrument in score:
+				continue
+			music = score[ instrument ]
+
 			for measure in music:
 				for beat in measure['beats']:
 					for note in beat:
@@ -1183,18 +1220,11 @@ class LilypondConvertor(Convertor):
 		crescendoDecrescendo = False
 		dynamic = 'M'
 
-		instruments = a['instruments']
-		instruments2 = ['snare','tenor','bass','cymbal']
-
-		for instrument in instruments2:
-			if not instrument in instruments.keys():
+		for instrument in score['instruments']:
+			if not instrument in score:
 				continue
+			music = score[ instrument ]
 
-			if 'instruments' in settings and not instrument in settings['instruments']:
-				continue
-
-			music = instruments[ instrument ]
-			
 			if instrument == 'snare':
 				ret += '\t% Snare\n'
 				ret += '\t\\new Staff {\n'
