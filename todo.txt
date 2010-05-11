@@ -1,16 +1,9 @@
+REDESIGN CONSIDERATIONS
+
+- allow simultaneous notes to have their own modifiers, or share them
+
 - parse time signatures
 	- pain in the ass with the current regex setup. need to be able to easily define regexes, but also define a collection of regexes, for more concise code in the parser
-
-- adjust instrument volumes by testing pp and ff
-	- can't hear tenors over basses at pp versus p
-
-- musicxml
-	- instrument names
-	- flams
-	- unisons
-	- dynamic changes
-
-- push dynamics to lilypond even on rest notes
 
 - make sure: [abc][abc]r (triplet) works with lilypond output
 	- this is going to be tricky
@@ -23,14 +16,34 @@
 	h h 2[hhhhh:rrrll hhhhh:rrrll h] | h
 
 - sub-beat tuplets
-	- h[hhh]h
+	- h[hhh]h (recurse and subdivide somehow?)
 	- h..hhhh..
-
-- when compiling for midi output
-	- add tap-off measure
 
 - plan cymbal notation
 	- need "stop previous event" modifiers
+
+
+OTHER
+
+- real midi output
+	- midicomp maps c4 and other notes to midi instruments that seem to be 2 octaves too low. check svg in reference
+	- what does the track instrument volume do again?
+
+- temporary music files to play a note from each instrument so i can rip the samples
+
+- adjust instrument volumes by testing pp and ff
+	- can't hear tenors over basses at pp versus p
+
+- musicxml
+	- instrument names
+	- flams
+	- unisons
+	- dynamic changes
+
+- push dynamics to lilypond even on rest notes
+
+- when compiling for midi output
+	- add tap-off measure
 
 - maybe switch from time signature at the end, to requiring it to be specified in the first measure
 	- but then we have to declare it multiple times
@@ -65,6 +78,7 @@
 
 Done:
 
+- push sticking to lilypond output
 - musicxml: title, author, copyright
 - explicit \break every 4 measures
 - proper clef on percussion staves

@@ -1164,9 +1164,9 @@ class LilypondConvertor(Convertor):
 						# should i set shot flag here too?
 		return score
 
-	def convert(self, parsed, settings={}):
+	def convert(self, score, settings={}):
 		#a = self.flams(parsed)
-		a = self.fixDurations(parsed)
+		a = self.fixDurations(score)
 
 		ret = '\\version "2.8.7"\n'
 		ret += '#(set-default-paper-size "a4" \'landscape)'
@@ -1317,6 +1317,9 @@ class LilypondConvertor(Convertor):
 								# fours?
 								if 'fours' in note:
 									ret += ':' + str(note['duration'] * 4)
+
+								if 'hand' in note:
+									ret += ' _"' + note['hand'] + '"'
 
 								if 'dynamicChangeEnd' in note:
 									ret += '\! '
