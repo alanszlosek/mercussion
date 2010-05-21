@@ -1,4 +1,5 @@
 import sys
+import yaml
 from lexer import *
 from convertor import *
 
@@ -63,88 +64,17 @@ class Parser:
 			return self.next()
 		return True
 
-
-	def score(self):
-		ret = {}
-		ret['instruments'] = ['snare','tenor','bass','cymbal']
-
-		if 'instruments' in self.settings:
-			for instrument in ret['instruments']:
-				if not instrument in self.settings['instruments']:
-					ret['instruments'].remove( instrument )
-
-		a = self.details()
-		if len(a):
-			ret.update(a)
-		a = self.instruments()
-		if len(a):
-			ret.update(a)
-		return ret
-
-	def details(self):
-		ret = {}
-		while self.token == 'detail':
-			detail = self.value.replace(':', '')
-			self.accept('detail')
-			while self.token == 'space':
-				self.accept('space')
-			ret[ detail ] = self.value.replace('"', '')
-			self.accept('string')
-			while self.token == 'space':
-				self.accept('space')
-		return ret
-
-	def instruments(self):
-		if self.debug:
-			sys.stderr.write('In instruments()\n')
-		ret = {}
-		while self.token == 'instrument':
-			a = self.instrument()
-
-			if len(a) == 0:
-				break
-			else:
-				# is the current instrument name in self.settings['instruments']
-				# if 'instruments' in self.settings and instrument in self.settings['instruments']
-				# skip
-				# else
-				ret.update(a)
-		return ret
-	
-	def instrument(self):
-		if self.debug:
-			sys.stderr.write('In instrument()\n')
-		ret = {}
-		
-		instrument = self.value.replace(':', '')
-
-		self.accept('instrument')
-		while self.token == 'space':
-			self.accept('space')
-		a = {}
-		if instrument == 'snare':
-			a = self.snareMusic()
-		if instrument == 'tenor':
-			a = self.tenorMusic()
-		if instrument == 'bass':
-			a = self.bassMusic()
-		if instrument == 'cymbal':
-			a = self.cymbalMusic()
-		if a != self.NotFound:
-			ret[ instrument ] = a
-		return ret
-
 	# music()	
-	def snareMusic(self):
+	def music(self):
 		if self.debug:
-			sys.stderr.write('In snareMusic()\n')
+			sys.stderr.write('In music()\n')
 		# returns an array of measures
 		ret = []
 
 		while 1:
 			#a = self.timeSignature()
 
-			a = self.snareMeasure()
+			a = self.measure()
 
 			if a != self.NotFound:
 				ret.append(a)
@@ -163,7 +93,7 @@ class Parser:
 			return self.NotFound
 		return ret
 
-	def snareMeasure(self):
+	def measure(self):
 		if self.debug:
 			sys.stderr.write('In measure()\n')
 
@@ -174,7 +104,7 @@ class Parser:
 			'beats': []
 		}
 		while 1: # wish we had a do..while
-			a = self.snareBeat()
+			a = self.beat()
 			if len(a) == 0:
 				break
 			ret['beats'].append(a)
@@ -185,25 +115,25 @@ class Parser:
 			return self.NotFound
 		return ret
 
-	def snareBeat(self):
+	def beat(self):
 		if self.debug:
-			sys.stderr.write('In snareBeat()\n')
+			sys.stderr.write('In beat()\n')
 		# returns an array of notes
 		ret = []
-		while ['articulation','dynamic','rest','snareSurface','sticking'].count(self.token):
+		while ['articulation','dynamic','rest','surface','sticking'].count(self.token):
 			# digest notes
-			a = self.snareNote()
+			a = self.note()
 			if a == self.NotFound:
 				if self.debug:
-					sys.stderr.write('NotFound from snareNote()\n')
+					sys.stderr.write('NotFound from note()\n')
 				break
 			else:
 				ret.append(a)
 
 
 		# are we at the sticking separator?
-		if self.token == 'startSticking':
-			self.accept('startSticking')
+		if self.token == 'colon':
+			self.accept('colon')
 			stickings = self.sticking()
 			# now annotate notes in ret with stickings we just got?
 			i = 0
@@ -215,9 +145,9 @@ class Parser:
 			
 		return ret
 
-	def snareNote(self):
+	def note(self):
 		if self.debug:
-			sys.stderr.write('In snareNote()\n')
+			sys.stderr.write('In note()\n')
 		# returns a note structure
 		# this is just a sample of the structure, elements will not be present unless they have a value
 		ret = {
@@ -236,9 +166,9 @@ class Parser:
 			#'surface': False
 		}
 		
-		a = self.snareModifiers()
+		a = self.modifiers()
 		ret.update(a)
-		a = self.snareSurface()
+		a = self.surface()
 
 		if a == self.NotFound: # if no surface, probably an error
 			return self.NotFound
@@ -247,21 +177,21 @@ class Parser:
 			ret.update(a)
 		return ret
 
-	def snareModifiers(self):
+	def modifiers(self):
 		if self.debug:
-			sys.stderr.write('In snareModifiers()\n')
+			sys.stderr.write('In modifiers()\n')
 		ret = {}
 		
 		while 1:
-			a = self.snareModifier()
+			a = self.modifier()
 			if a == self.NotFound: # no modifiers, or no more modifiers
 				break
 			ret.update(a)
 		return ret
 
-	def snareModifier(self):
+	def modifier(self):
 		if self.debug:
-			sys.stderr.write('In snareModifier()\n')
+			sys.stderr.write('In modifier()\n')
 		ret = {}
 		if self.token == 'articulation':
 			if self.value == ',':
@@ -281,9 +211,9 @@ class Parser:
 				sys.stderr.write('No modifier or no more\n')
 			return self.NotFound
 
-	def snareSurface(self):
+	def surface(self):
 		if self.debug:
-			sys.stderr.write('In snareSurface()\n')
+			sys.stderr.write('In surface()\n')
 		ret = {}
 
 		# snare
@@ -293,7 +223,7 @@ class Parser:
 			self.accept('rest')
 			return ret
 
-		elif re.search(self.value, "HXRBSG"):
+		elif re.search(self.value, "ABCDEFHXRBSG"):
 			# why would value='.' be matched here?
 			ret['accent'] = True
 			if self.value == 'X':
@@ -301,413 +231,20 @@ class Parser:
 				ret['surface'] = self.value.lower()
 			else:
 				ret['surface'] = self.value.lower()
-			self.accept('snareSurface')
+			self.accept('surface')
 			return ret
 
-		elif re.search(self.value, "hxrbsg"):
+		elif re.search(self.value, "abcdefhxrbsg"):
 			if self.value == 'x':
 				ret['shot'] = True
 				ret['surface'] = self.value
 			else:
 				ret['surface'] = self.value
-			self.accept('snareSurface')
+			self.accept('surface')
 			return ret
 			
 		else: # should only get here if there's an error
 			return self.NotFound
-
-
-
-# bass methods
-
-	def bassMusic(self):
-		if self.debug:
-			sys.stderr.write('In bassMusic()\n')
-		# returns an array of measures
-		ret = []
-
-		while 1:
-			a = self.bassMeasure()
-
-			if a != self.NotFound:
-				ret.append(a)
-			else:
-				break
-
-			while self.token == 'space':
-				self.accept('space')
-			if self.token != 'pipe':
-				break
-			else:
-				if not self.accept('pipe'):
-					break
-			while self.token == 'space':
-				self.accept('space')
-		if len(ret) == 0:
-			return self.NotFound
-		return ret
-
-	def bassMeasure(self):
-		if self.debug:
-			sys.stderr.write('In measure()\n')
-
-		# returns a measure structure
-		ret = {
-			#'timesignature': '4/4',
-			'beats': []
-		}
-		while 1:
-			a = self.bassBeat()
-			if len(a) == 0:
-				break
-			ret['beats'].append(a)
-			while self.token == 'space':
-				self.accept('space')
-
-		if len( ret['beats'] ) == 0:
-			return self.NotFound
-		return ret
-
-	def bassBeat(self):
-		if self.debug:
-			sys.stderr.write('In bassBeat()\n')
-		# returns an array of notes
-		ret = []
-		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking','bassTenorSurface','simultaneousA'].count(self.token):
-			a = self.bassNote()
-			if a == self.NotFound:
-				if self.debug:
-					sys.stderr.write('NotFound from bassNote()\n')
-				break
-			else:
-				ret.append(a)
-
-		# are we at the sticking separator?
-		if self.token == 'startSticking':
-			self.accept('startSticking')
-			stickings = self.sticking()
-			# now annotate notes in ret with stickings we just got?
-			i = 0
-			for sticking in stickings:
-				note = ret[ i ]
-				if sticking != '.':
-					note['hand'] = stickings[i]
-				i += 1
-
-		return ret
-
-	def bassNote(self):
-		if self.debug:
-			sys.stderr.write('In bassNote()\n')
-		# returns a note structure
-		# this is just a sample of the structure, elements will not be present unless they have a value
-		ret = {
-			#'accent': False,
-			#'diddle': False,
-			#'dynamic': False,
-			#'dynamicChange': '>' or '<'
-			#'dynamicChangeEnd': False,
-			#'flam': False,
-			#'flamRest': False,
-			#'fours': False,
-			#'highAccent': False,
-			#'notes': [],
-			#'rest': False,
-			#'sticking': False,
-			#'surface': False
-		}
-		
-		a = self.bassModifiers()
-		ret.update(a)
-		a = self.bassSurface()
-
-		if a == self.NotFound: # if no surface, probably an error
-			return self.NotFound
-			#self.die('Should have caught this error in surfaceNote()')
-		else:
-			ret.update(a)
-		return ret
-
-	def bassModifiers(self):
-		if self.debug:
-			sys.stderr.write('In bassModifiers()\n')
-		ret = {}
-		
-		while 1:
-			a = self.bassModifier()
-			if a == self.NotFound: # no modifiers, or no more modifiers
-				break
-			ret.update(a)
-		return ret
-
-	def bassModifier(self):
-		if self.debug:
-			sys.stderr.write('In bassModifier()\n')
-		ret = {}
-		if self.token == 'articulation':
-			if self.value == ',':
-				ret['flam'] = True
-			if self.value == '-':
-				ret['diddle'] = True
-			if self.value == '=':
-				ret['fours'] = True
-			self.accept('articulation')
-			return ret
-
-		elif self.token == 'dynamic':
-			return self.dynamicModifier()
-
-		else:
-			if self.debug:
-				sys.stderr.write('No modifier or no more\n')
-			return self.NotFound
-
-	def bassSurface(self):
-		if self.debug:
-			sys.stderr.write('In tenorSurface()\n')
-		ret = {}
-
-		# bass tenor
-		if self.token == 'rest': #rest
-			ret['rest'] = True
-			self.accept('rest')
-			return ret
-
-		elif self.token == 'simultaneousA':
-			self.accept('simultaneousA')
-			ret = self.bassSurfaces()
-			self.accept('simultaneousB')
-			return ret
-
-		else:
-			return self.bassSurface2()
-
-	def bassSurface2(self):
-		if self.debug:
-			sys.stderr.write('In bassSurface2()\n')
-		ret = {}
-		if re.search(self.value, "ABCDEFU"):
-			ret['accent'] = True
-			ret['surface'] = self.value.lower()
-			self.accept('bassTenorSurface')
-			return ret
-
-		elif re.search(self.value, "abcdefu"):
-			ret['surface'] = self.value
-			self.accept('bassTenorSurface')
-			return ret
-			
-		else: # should only get here if there's an error
-			return self.NotFound
-
-	def bassSurfaces(self):
-		if self.debug:
-			sys.stderr.write('In bassSurfaces()\n')
-		ret = {}
-		while self.token == 'bassTenorSurface':
-			a = self.bassSurface2()
-			if 'surface' in ret:
-				surface = ret['surface']
-			else:
-				surface = ''
-			if 'surface' in a:
-				surface = surface + a['surface']
-			ret.update(a)
-			ret['surface'] = surface
-		return ret
-
-
-# tenor methods
-
-	def tenorMusic(self):
-		if self.debug:
-			sys.stderr.write('In tenorMusic()\n')
-		# returns an array of measures
-		ret = []
-
-		while 1:
-			a = self.tenorMeasure()
-
-			if a != self.NotFound:
-				ret.append(a)
-			else:
-				break
-
-			while self.token == 'space':
-				self.accept('space')
-			if self.token != 'pipe':
-				break
-			else:
-				if not self.accept('pipe'):
-					break
-			while self.token == 'space':
-				self.accept('space')
-		if len(ret) == 0:
-			return self.NotFound
-		return ret
-
-	def tenorMeasure(self):
-		if self.debug:
-			sys.stderr.write('In tenorMeasure()\n')
-
-		# returns a measure structure
-		ret = {
-			#'timesignature': '4/4',
-			'beats': []
-		}
-		while 1:
-			a = self.tenorBeat()
-			if len(a) == 0:
-				break
-			ret['beats'].append(a)
-			while self.token == 'space':
-				self.accept('space')
-
-		if len( ret['beats'] ) == 0:
-			return self.NotFound
-		return ret
-
-	def tenorBeat(self):
-		if self.debug:
-			sys.stderr.write('In tenorBeat()\n')
-		# returns an array of notes
-		ret = []
-		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','sticking', 'simultaneousA', 'bassTenorSurface', 'tenorModifier'].count(self.token):
-			a = self.tenorNote()
-			if a == self.NotFound:
-				if self.debug:
-					sys.stderr.write('NotFound from tenorNote()\n')
-				break
-			else:
-				ret.append(a)
-
-		# are we at the sticking separator?
-		if self.token == 'startSticking':
-			self.accept('startSticking')
-			stickings = self.sticking()
-			# now annotate notes in ret with stickings we just got?
-			i = 0
-			for sticking in stickings:
-				note = ret[ i ]
-				if sticking != '.':
-					note['hand'] = stickings[i]
-				i += 1
-
-		return ret
-
-	def tenorNote(self):
-		if self.debug:
-			sys.stderr.write('In tenorNote()\n')
-		# returns a note structure
-		# this is just a sample of the structure, elements will not be present unless they have a value
-		ret = {
-			#'accent': False,
-			#'diddle': False,
-			#'dynamic': False,
-			#'dynamicChange': '>' or '<'
-			#'dynamicChangeEnd': False,
-			#'flam': False,
-			#'flamRest': False,
-			#'fours': False,
-			#'highAccent': False,
-			#'notes': [],
-			#'rest': False,
-			#'sticking': False,
-			#'surface': False
-		}
-		
-		a = self.tenorModifiers()
-		ret.update(a)
-		a = self.tenorSurface()
-
-		if a == self.NotFound: # if no surface, probably an error
-			return self.NotFound
-			#self.die('Should have caught this error in surfaceNote()')
-		else:
-			ret.update(a)
-		return ret
-
-	def tenorModifiers(self):
-		if self.debug:
-			sys.stderr.write('In tenorModifiers()\n')
-		ret = {}
-		
-		while ['articulation','dynamic','tenorModifier'].count(self.token):
-			if self.token == 'articulation':
-				if self.value == ',':
-					ret['flam'] = True
-				if self.value == '-':
-					ret['diddle'] = True
-				if self.value == '=':
-					ret['fours'] = True
-				self.accept('articulation')
-
-			elif self.token == 'tenorModifier':
-				if self.value == '*': # shot
-					ret['shot'] = True
-				self.accept('tenorModifier')
-
-			elif self.token == 'dynamic':
-				a = self.dynamicModifier()
-				ret.update(a)
-
-		return ret
-
-	def tenorSurface(self):
-		if self.debug:
-			sys.stderr.write('In tenorSurface()\n')
-		ret = {}
-
-		# bass tenor
-		if self.token == 'rest': #rest
-			ret['rest'] = True
-			self.accept('rest')
-			return ret
-
-		elif self.token == 'simultaneousA':
-			self.accept('simultaneousA')
-			ret = self.tenorSurfaces()
-			self.accept('simultaneousB')
-			return ret
-
-		else:
-			return self.tenorSurface2()
-
-	def tenorSurface2(self):
-		if self.debug:
-			sys.stderr.write('In tenorSurface2()\n')
-		ret = {}
-		if re.search(self.value, "ABCDEFU"):
-			ret['accent'] = True
-			ret['surface'] = self.value.lower()
-			self.accept('bassTenorSurface')
-			return ret
-
-		elif re.search(self.value, "abcdefu"):
-			ret['surface'] = self.value
-			self.accept('bassTenorSurface')
-			return ret
-			
-		else: # should only get here if there's an error
-			return self.NotFound
-
-	def tenorSurfaces(self):
-		if self.debug:
-			sys.stderr.write('In tenorSurfaces()\n')
-		ret = {}
-		while self.token == 'bassTenorSurface':
-			a = self.tenorSurface2()
-			if 'surface' in ret:
-				surface = ret['surface']
-			else:
-				surface = ''
-			if 'surface' in a:
-				surface = surface + a['surface']
-			ret.update(a)
-			ret['surface'] = surface
-		return ret
 
 
 # cymbal methods
@@ -1055,33 +592,23 @@ class Parser:
  
 rules = [
 	("comment", r"#.*"),
-	# details
-	("detail", r"(author|basses|subtitle|tempo|timesignature|title):"),
-	# instruments
-	("instrument", r"(snare|bass|tenor|cymbal):"),
 
 	#modifiers
-	("startSticking", ":"),
 	("dynamic", r"[<>OPMFG]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=-]"),
 
-	("snareSurface", r"[hHxXsS]"),
-	("bassTenorSurface", r"[aAbBcCdDeEfFuU]"),
-	("tenorModifier", r"[*]"),
-	("cymbalModifier", r"[~^!]"),
+	("surface", r"[aAbBcCdDeEfFuUsStThH]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
 
-	("simultaneousA", r"\("),
-	("simultaneousB", r"\)"),
+	("simultaneous", r"\+"),
 	
 	("space", r"[\t\r\n ]"),
-	("string", r"\"[a-zA-Z0-9 /_-]+\"") # string
 
-	#("timesignature", r"[1-9]/[1-9]")
-	#("tempo", r"[1-9]+")
+	("integer", r"[0-9]"),
+	("colon", ":")
 ]
  
 lex = Lexer(rules, case_sensitive=True, omit_whitespace=False)
@@ -1103,18 +630,26 @@ for arg in sys.argv:
 if 'instruments' in settings:
 	settings['instruments'] = map(str.strip, settings['instruments'].split(',')) # might need to strip spaces or quotes
 
-tokens = lex.scan( sys.stdin.read() )
+doc = yaml.load( sys.stdin.read() )
+
+# foreach instrument, lex
+for instrument in ['snare','tenor','bass','cymbal']:
+	if not instrument in doc:
+		continue
+	tokens = lex.scan( doc[ instrument ] )
 
 # hmmm, which methods do i need to pass settings to?
 
-parser = Parser(tokens, settings)
-a = parser.score()
-# finalizes and annotates the intermediate data structure
-a = parser.condense(a)
+	parser = Parser(tokens, settings)
+	a = parser.music()
+	# finalizes and annotates the intermediate data structure
+	#a = parser.condense(a)
+	# replace original string
+	doc[ instrument ] = a
 
 if 'midi' in settings:
 	out = MidiConvertor()
-	b = out.convert(a, settings)
+	b = out.convert(doc, settings)
 	sys.stdout.write(b)
 
 elif 'vdlmidi' in settings:
@@ -1138,4 +673,4 @@ elif 'musicxml' in settings:
 	sys.stdout.write(b)
 
 else:
-	sys.stdout.write( repr(a) )
+	sys.stdout.write( repr(doc) )

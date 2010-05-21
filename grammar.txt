@@ -1,78 +1,48 @@
-score: details instruments | instruments
+YAML document base:
 
-details: detail string details
-
-detail: "author:" | "tempo:" | "timesignature:" | "title:" 
-
-instruments: instrument instruments | instrument
-
-instrument: "bass:" bassMusic | "cymbal:" cymbalMusic | "snare:" snareMusic | "tenor:" tenorMusic
-
-
-// snare
-snareMusic: snareMeasure "|" snareMusic |  snareMeasure
-
-snareMeasure: snareBeat space* snareMeasure | snareBeat
-
-snareBeat: snareNotes ':' sticking | snareNotes
-
-snareNotes: snareNote snareNotes | snareNote
-
-snareNote: snareModifers snareSurface | snareSurface
-
-snareModifiers: snareModifier snareModifiers | snareModifier
-
-snareModifier: dynamicModifier | [,-=]
-
-snareSurface: [hHxXrRbBsSgG] | rest
+title: Something
+author: Alan Szlosek
+tempo: 120
+timesignature: 4/4
+snare: |
+	SNARE MUSIC
+bass: |
+	BASS MUSIC
 
 
-// tenor
-tenorMusic: tenorMeasure "|" tenorMusic | tenorMeasure
+BEGIN GRAMMAR
+--------
 
-tenorMeasure: tenorBeat space* tenorMeasure | tenorBeat
+music: measure "|" music | measure 
 
-tenorBeat: tenorNotes ':' sticking | tenorNotes
+measure: beat space* measure | beat
 
-tenorSimultaneousNotes: tenorNote tenorSimultaneousNotes | tenorNote
+beat: notes ':' sticking | notes
 
-tenorNotes: tenorNote tenorNotes | tenorNote
+# + joins simultaneous notes
+notes: [0-9]+ ':' [0-9]+ '[' notes2 ']' | note '+' notes2 | note notes | note
+notes2: note notes | note
 
-tenorNote: tenorModifers tenorSurface | tenorSurface
+note: modifiers surface | surface 
 
-tenorModifiers: tenorModifier tenorModifiers | tenorModifier
+modifiers: modifier modifiers | modifier
+
+modifier: dynamicModifier | [,-=]
+
+surface: [hHxXrRbBsSgG] | rest
+
 
 tenorModifier: dynamicModifier | [,-=*]
 
-tenorSurface: '(' tenorSurfaces ') | tenorSurface2
 tenorSurface2: [aAbBcCdDeEfF]
-tenorSurfaces: tenorSurface2 tenorSurfaces | tenorSurface2
-
-
-// bass
-bassMusic: bassMeasure "|" bassMusic | bassMeasure
-
-bassMeasure: bassBeat space* bassMeasure | bassBeat
-
-bassBeat: bassNotes ':' sticking | bassNotes
-
-bassSimultaneousNotes: bassNote bassSimultaneousNotes | bassNote
-
-bassNotes: bassNote bassNotes | bassNote
-
-bassNote: bassModifers bassSurface | bassSurface
-
-bassModifiers: bassModifier bassModifiers | bassModifier
 
 bassModifier: dynamicModifier | [,-=*]
-
-bassSurface: "[" bassSurface2* "]" | bassSurface2 | rest
 
 bassSurface2: [aAbBcCdDeEuU]
 
 
 
-dynamicModifier: [PMFG<>]
+dynamicModifier: [OPMFG<>]
 
 stickingModifier: [rl]
 
