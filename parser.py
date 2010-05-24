@@ -11,10 +11,8 @@ class Parser:
 	# defines
 	NotFound = -1
 
-	state = []
 	token = ''
 	value = ''
-	tree = []
 
 	settings = {}
 
@@ -64,6 +62,10 @@ class Parser:
 			return self.next()
 		return True
 
+	def whitespace(self):
+		while self.token == 'space':
+			self.accept('space')
+
 	# music()	
 	def music(self):
 		if self.debug:
@@ -80,15 +82,17 @@ class Parser:
 				ret.append(a)
 			else:
 				break
-			while self.token == 'space':
-				self.accept('space')
+
+			self.whitespace()
+
 			if self.token != 'pipe':
 				break
 			else:
 				if not self.accept('pipe'):
 					break
-			while self.token == 'space':
-				self.accept('space')
+
+			self.whitespace()
+
 		if len(ret) == 0:
 			return self.NotFound
 		return ret
@@ -108,8 +112,8 @@ class Parser:
 			if len(a) == 0:
 				break
 			ret['beats'].append(a)
-			while self.token == 'space':
-				self.accept('space')
+
+			self.whitespace()
 
 		if len( ret['beats'] ) == 0:
 			return self.NotFound
@@ -120,7 +124,7 @@ class Parser:
 			sys.stderr.write('In beat()\n')
 		# returns an array of notes
 		ret = []
-		while ['articulation','dynamic','rest','surface','sticking'].count(self.token):
+		while ['articulation','dynamic','rest','simultaneous','sticking','surface'].count(self.token):
 			# digest notes
 			a = self.note()
 			if a == self.NotFound:
@@ -200,6 +204,8 @@ class Parser:
 				ret['diddle'] = True
 			if self.value == '=':
 				ret['fours'] = True
+			if self.value == '!':
+				ret['stop'] = True
 			self.accept('articulation')
 			return ret
 
@@ -216,33 +222,21 @@ class Parser:
 			sys.stderr.write('In surface()\n')
 		ret = {}
 
-		# snare
-		# rR lL xX yY sS
 		if self.token == 'rest': #rest
 			ret['rest'] = True
 			self.accept('rest')
 			return ret
 
-		elif re.search(self.value, "ABCDEFHXRBSG"):
+		elif self.token == 'surface':
 			# why would value='.' be matched here?
-			ret['accent'] = True
-			if self.value == 'X':
+			if self.value.isupper():
+				ret['accent'] = True
+			if self.value.lower() == 'x':
 				ret['shot'] = True
-				ret['surface'] = self.value.lower()
-			else:
-				ret['surface'] = self.value.lower()
+			ret['surface'] = self.value.lower()
 			self.accept('surface')
 			return ret
 
-		elif re.search(self.value, "abcdefhxrbsg"):
-			if self.value == 'x':
-				ret['shot'] = True
-				ret['surface'] = self.value
-			else:
-				ret['surface'] = self.value
-			self.accept('surface')
-			return ret
-			
 		else: # should only get here if there's an error
 			return self.NotFound
 
@@ -472,7 +466,7 @@ class Parser:
 			self.accept('dynamic')
 			return ret
 
-	def condense(self, score, settings={}):
+	def condense(self, instrument, music, settings={}):
 		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
 
 		# within a beat, if the last note of a pair is a rest, the note prior to a rest should have half the duration
@@ -487,107 +481,104 @@ class Parser:
 		# if timeSignature per measure is not specified, deduce into x/4
 
 		# obey basses setting
+		# FIX ME
 		basses = 'abcdef'
-		if 'basses' in score:
-			bassUnison = basses[0: int(score['basses']) ]
-		else: # default to 5 basses for unisons
-			bassUnison = basses[0:5]
+		#if 'basses' in settings:
+		#	bassUnison = basses[0: int(score['basses']) ]
+		#else: # default to 5 basses for unisons
+		bassUnison = basses[0:5]
 
 		# annotate with durations and many other things
-		for instrument in score['instruments']:
-			if not instrument in score:
-				continue
-			music = score[ instrument ]
-			dynamic = False 
-			dynamicChange = False
-			tupletCount = 1
+		dynamic = False 
+		dynamicChange = False
+		tupletCount = 1
 
-			# set time signature on first measure if not specified and score has one
-			firstMeasure = music[0]
-			if not 'timesignature' in firstMeasure and 'timesignature' in score:
-				firstMeasure['timesignature'] = score['timesignature']
+		# set time signature on first measure if not specified and score has one
+		# FIX ME
+		#firstMeasure = music[0]
+		#if not 'timesignature' in firstMeasure and 'timesignature' in score:
+		#	firstMeasure['timesignature'] = score['timesignature']
 
-			for measure in music:
-				#if not 'timesignature' in measure:
-				#	measure['timesignature'] = score['timesignature']
-				for beat in measure['beats']:
-					# fix tenor flams
-					if instrument == 'tenor':
-						i = 0
-						z = len(beat)
-						# the note with the flam flag will have the modifiers we want
-						while i < z: # for each note in the beat
-							note = beat[i]
-							if 'flam' in note and note['flam'] == True:
-								note['flam'] = note['surface']
-								note['surface'] = beat[ i+1 ]['surface']
-								#print('del' + str(i+1))
-								del beat[i+1]
-								z -= 1
-							else: # only advance if we didn't just delete a beat
-								i += 1
-					# end tenor-specific
+		for measure in music:
+			#if not 'timesignature' in measure:
+			#	measure['timesignature'] = score['timesignature']
+			for beat in measure['beats']:
+				# fix tenor flams
+				if instrument == 'tenor':
+					i = 0
+					z = len(beat)
+					# the note with the flam flag will have the modifiers we want
+					while i < z: # for each note in the beat
+						note = beat[i]
+						if 'flam' in note:
+							note['flam'] = note['surface']
+							note['surface'] = beat[ i+1 ]['surface']
+							#print('del' + str(i+1))
+							del beat[i+1]
+							z -= 1
+						i += 1
+				# end tenor-specific
 
-					# convert bass unisons to simultaneous notes
-					if instrument == 'bass':
-						for note in beat:
-							if 'surface' in note and note['surface'] == 'u':
-								# how many basses should we expand to?
-								note['surface'] = bassUnison
-							if 'flam' in note:
-								note['flam'] = note['surface']
-					# end bass-specific
-
-					# this is really geared toward midi output
-					# annotate with durations
-					duration = len(beat)
+				# convert bass unisons to simultaneous notes
+				if instrument == 'bass':
 					for note in beat:
-						# duration is the denominator of the fraction,
-						# how much of the beat the note owns
-						# 4 would be 1/4 of a beat, thus a 16th note
-						note['duration'] = duration
-						if not (duration == 1 or duration == 2 or duration % 4 == 0):
-							if tupletCount == 1:
-								note['tupletStart'] = duration
+						if 'surface' in note and note['surface'] == 'u':
+							# how many basses should we expand to?
+							note['surface'] = bassUnison
+						if 'flam' in note:
+							note['flam'] = note['surface']
+				# end bass-specific
 
-							if tupletCount == duration:
-								note['tupletStop'] = True
-								tupletCount = 1
-							else:
-								tupletCount += 1
-							note['tuplet'] = True
-						else:
+				# this is really geared toward midi output
+				# annotate with durations
+				duration = len(beat)
+				for note in beat:
+					# duration is the denominator of the fraction,
+					# how much of the beat the note owns
+					# 4 would be 1/4 of a beat, thus a 16th note
+					note['duration'] = duration
+					if not (duration == 1 or duration == 2 or duration % 4 == 0):
+						if tupletCount == 1:
+							note['tupletStart'] = duration
+
+						if tupletCount == duration:
+							note['tupletStop'] = True
 							tupletCount = 1
+						else:
+							tupletCount += 1
+						note['tuplet'] = True
+					else:
+						tupletCount = 1
 
-					# set dynamicChangeEnd
-					for note in beat:
-						if dynamicChange and 'dynamic' in note:
-							note['dynamicChangeEnd'] = True
-							dynamicChange = False
-						if 'dynamicChange' in note:
-							dynamicChange = True
-						
-					# condense rests
-                                        # need to skip tuplets
-                                        i = 0
-                                        z = len(beat)
-                                        while i < z:
-                                                j = i + 1
-                                                if not j < z:
-                                                        i += 2
-                                                        continue
-                                                a = beat[i]
-                                                b = beat[j]
-                                                if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
-                                                        a['duration'] /= 2
-                                                        del beat[j]
-                                                        i -= 1
-                                                        z -= 1
+				# set dynamicChangeEnd
+				for note in beat:
+					if dynamicChange and 'dynamic' in note:
+						note['dynamicChangeEnd'] = True
+						dynamicChange = False
+					if 'dynamicChange' in note:
+						dynamicChange = True
+					
+				# condense rests
+				# need to skip tuplets
+				i = 0
+				z = len(beat)
+				while i < z:
+					j = i + 1
+					if not j < z:
+						i += 2
+						continue
+					a = beat[i]
+					b = beat[j]
+					if 'rest' in b and not 'tuplet' in b: # don't condense rests within tuplets
+						a['duration'] /= 2
+						del beat[j]
+						i -= 1
+						z -= 1
 
-                                                i += 2
-					# end condense rests
+					i += 2
+				# end condense rests
 
-		return score
+		return music 
 
  
 rules = [
@@ -596,9 +587,9 @@ rules = [
 	#modifiers
 	("dynamic", r"[<>OPMFG]{1}"),
 	("sticking", r"[rl]"),
-	("articulation", r"[,=-]"),
+	("articulation", r"[,=!-]"),
 
-	("surface", r"[aAbBcCdDeEfFuUsStThH]"),
+	("surface", r"[aAbBcCdDeEfFuUsStThHxX]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
@@ -627,13 +618,23 @@ for arg in sys.argv:
 		else:
 			settings[ arg[2:] ] = True
 
+instruments = ['snare','tenor','bass','cymbal']
+
 if 'instruments' in settings:
 	settings['instruments'] = map(str.strip, settings['instruments'].split(',')) # might need to strip spaces or quotes
+else:
+	settings['instruments'] = instruments
 
 doc = yaml.load( sys.stdin.read() )
 
+# clear out instrument we want to ignore
+for instrument in instruments:
+	if instrument in doc and not instrument in settings['instruments']:
+		del doc[ instrument ]
+
+
 # foreach instrument, lex
-for instrument in ['snare','tenor','bass','cymbal']:
+for instrument in settings['instruments']:
 	if not instrument in doc:
 		continue
 	tokens = lex.scan( doc[ instrument ] )
@@ -643,9 +644,11 @@ for instrument in ['snare','tenor','bass','cymbal']:
 	parser = Parser(tokens, settings)
 	a = parser.music()
 	# finalizes and annotates the intermediate data structure
-	#a = parser.condense(a)
+	a = parser.condense(instrument, a)
 	# replace original string
 	doc[ instrument ] = a
+
+doc['instruments'] = settings['instruments']
 
 if 'midi' in settings:
 	out = MidiConvertor()
@@ -654,22 +657,22 @@ if 'midi' in settings:
 
 elif 'vdlmidi' in settings:
 	out = VDLMidiConvertor()
-	b = out.convert(a, settings)
+	b = out.convert(doc, settings)
 	sys.stdout.write(b)
 
 elif 'midi2' in settings:
 	out = MidiConvertor2()
-	b = out.convert(a, settings)
+	b = out.convert(doc, settings)
 	sys.stdout.write(b)
 
 elif 'lilypond' in settings:
 	out = LilypondConvertor()
-	b = out.convert(a, settings)
+	b = out.convert(doc, settings)
 	sys.stdout.write(b)
 
 elif 'musicxml' in settings:
 	out = MusicXMLConvertor()
-	b = out.convert(a, settings)
+	b = out.convert(doc, settings)
 	sys.stdout.write(b)
 
 else:

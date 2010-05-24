@@ -1,0 +1,11 @@
+Do I need such a deeply nested data structure? I guess it makes printing barlines in lilypond easier, but it doesn't help anything else. Might be able to do away with separate array of measures ... move beat arrays up a level.
+
+music = [
+	{timesignature: '3/4'},
+	[
+		{surface: r},
+		{surface: r},
+		{rest: True}
+	],
+	{timesignature: '4/4'}
+]

@@ -262,12 +262,14 @@ class MidiConvertor(Convertor):
 class VDLMidiConvertor(Convertor):
 	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
+	# tried 7% gain with each level, not significant enough
 	volumeMap = {
-		"O": .20,
-		"P": .40, # pianissimo
-		"M": .60, # mezzo-forte
+		"O": .50,
+		"P": .60, # pianissimo
+		# should be mezzo-piano in here, i think
+		"M": .70, # mezzo-forte
 		"F": .80, # forte
-		"G": 1.00 # ff
+		"G": .90 # ff
 	}
 
 	# will need to hard-code volume levels for crescendos and decrescendos
@@ -376,16 +378,16 @@ class VDLMidiConvertor(Convertor):
 		}
 		# integers so we can add and subtract
 		instrumentVolumeMap = {
-			"bass": 127,
-			"cymbal": 127,
-			"snare": 100,
+			"bass": 120,
+			"cymbal": 120,
+			"snare": 120,
 			"tenor": 120
 		}
 		instrumentPanMap = {
-			"bass": "127", # 30
-			"cymbal": "127",
-			"snare": "127",
-			"tenor": "127" # 98
+			"bass": "64", # 30
+			"cymbal": "64",
+			"snare": "64",
+			"tenor": "64" # 98
 		}
 		# these map to manual VirtualDrumline instruments
 		noteMap = {
@@ -435,11 +437,13 @@ class VDLMidiConvertor(Convertor):
 
 			"cymbal": {
 				# unisons
-				"a": [58], # crash
-				"b": [62], # sizzle
-				"c": [60], # suck
-				"d": [70], # hihat
-				"e": [66], # edge tap
+				"a": [54,54], # was flat crash, now port
+				"b": [64,64], # slide-choke
+				"c": [57,57], # slam-choke
+				"d": [70,70], # hihat
+				"e": [66,66], # edge tap
+
+				"f": [], # mute for a crash?
 
 				# solo 
 				"s": [34], #crash
@@ -468,12 +472,12 @@ class VDLMidiConvertor(Convertor):
 		# set counter a second into the future for blank space padding
 
 		flamPosition = -20 # calculate based on tempo
-		accentIncrease = 2 * int(127/5)
+		accentIncrease = 20 # we go up 10% (12.7x2=25) each dynamic level
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
 
 		channel = 1
-		transpose = 0
+		transpose = 12
 		# 12 for making midi file to play through Kontact
 
 		for instrument in score['instruments']:
@@ -542,9 +546,15 @@ class VDLMidiConvertor(Convertor):
 							if actualVolume > 127:
 								actualVolume = 127
 
+							if 'stop' in note:
+								onoff = 'Off'
+								actualVolume = 0
+							else:
+								onoff = 'On'
+
 							for surface in note['surface']:
 								# if tenor and shot, adjust mod wheel
-								out += c2 + " On ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
+								out += c2 + " " + onoff + " ch=" + channelString + " n=" + str(transpose + noteMap[ instrument ][ surface ][ hand ]) + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo
 								# add the second note
 								if 'diddle' in note:
@@ -1169,7 +1179,8 @@ class LilypondConvertor(Convertor):
 		a = self.fixDurations(score)
 
 		ret = '\\version "2.8.7"\n'
-		ret += '#(set-default-paper-size "a4" \'landscape)'
+		ret += '#(set-default-paper-size "a4" \'portrait)'
+
 		# this doesn't do enough. lilypond feels like a waste of effort.
 		ret += '\t\\paper {\n'
 		ret += '\t\tbetween-system-padding = #0.1\n'
@@ -1282,7 +1293,7 @@ class LilypondConvertor(Convertor):
 							if note['tupletStart'] == 3:
 								ret += '\\times 2/3 { '
 							else:
-								ret += '\\times 4/6 { '
+								ret += '\\times 4/' + str(note['tupletStart']) + ' { '
 
 
 						if 'flam' in note:

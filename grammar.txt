@@ -10,18 +10,32 @@ bass: |
 	BASS MUSIC
 
 
+	(c+d c+d) abc. abc. (a+b c+d . c+d)
+
 BEGIN GRAMMAR
 --------
 
 music: measure "|" music | measure 
 
-measure: beat space* measure | beat
+measure: beat ws measure | beat
 
 beat: notes ':' sticking | notes
 
 # + joins simultaneous notes
-notes: [0-9]+ ':' [0-9]+ '[' notes2 ']' | note '+' notes2 | note notes | note
-notes2: note notes | note
+notes: spacedNotes | togetherNotes
+
+# when inside parenthesis, whitespace no longer indicates a new beat
+# notes must be separated by whitespace
+spacedNotes: '(' ws* spacedNotes2 ws* ')'
+spacedNotes2: note ws '+' ws spacedNotes2 | note ws spacedNotes | note
+
+
+togetherNotes: note '+' togetherNotes2 | note togetherNotes | note
+
+
+tuplet: integer ':' integer '[' notes2 ']'
+integer: [1-9] [0-9]*
+
 
 note: modifiers surface | surface 
 
@@ -29,28 +43,16 @@ modifiers: modifier modifiers | modifier
 
 modifier: dynamicModifier | [,-=]
 
-surface: [hHxXrRbBsSgG] | rest
-
-
-tenorModifier: dynamicModifier | [,-=*]
-
-tenorSurface2: [aAbBcCdDeEfF]
-
-bassModifier: dynamicModifier | [,-=*]
-
-bassSurface2: [aAbBcCdDeEuU]
+surface: [abcdefhlruxABCDEFHLRUX] | rest
 
 
 
 dynamicModifier: [OPMFG<>]
 
+sticking: stickingModifier sticking | stickingModifier
 stickingModifier: [rl]
 
 rest: '.'
 
 
-tuplet_begin: "["
-
-tuplet_end: "]"
-
-string: [a-zA-Z0-9_-]+ | '"' .* '"'
+ws: \s ws | \s
