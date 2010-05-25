@@ -1,0 +1,14 @@
+Time to get cymbal notation down, at least something that will work with Virtual Drumline, since I now have that piece of software.
+
+With cymbals there are a couple of new concepts to worry about. Choking is the main one. Crashes get choked. Slides get choked. And so on.
+
+I suppose I don't need a universal choke surface, so I'll just use ! before the surface to indicate a choke. If 'b' is a slide, then !b would be the choke to complete the slide-choke action.
+
+Crash
+with choke
+Slide
+and choke
+Slam-choke
+Hihat
+Tap
+Zing
