@@ -382,7 +382,7 @@ class VDLMidiConvertor(Convertor):
 		}
 		# integers so we can add and subtract
 		instrumentVolumeMap = {
-			"bass": 120,
+			"bass": 127,
 			"cymbal": 120,
 			"snare": 120,
 			"tenor": 120
@@ -466,7 +466,12 @@ class VDLMidiConvertor(Convertor):
 			tempo = 500000
 
 		# MFile format tracks division
-		out = "MFile 1 " + str(len(score['instruments']) + 1) + " 384\n" # +1 tracks because of tempo track
+		tracks = 1
+		for instrument in score['instruments']:
+			if instrument in score:
+				tracks = tracks + 1
+
+		out = "MFile 1 " + str(tracks) + " 384\n" # +1 tracks because of tempo track
 		# tempo track
 		out += "MTrk\n"
 		out += "0 Tempo " + str(tempo) + "\n"
@@ -486,6 +491,7 @@ class VDLMidiConvertor(Convertor):
 
 		for instrument in score['instruments']:
 			if not instrument in score:
+				channel += 1
 				continue
 			music = score[ instrument ]
 
