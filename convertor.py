@@ -220,6 +220,10 @@ class MidiConvertor(Convertor):
 							if actualVolume > 127:
 								actualVolume = 127
 
+							# bass unisons
+							if note['surface'] == 'u':
+								note['surface'] = 'abcde'
+
 							for surface in note['surface']:
 								out += c2 + " On ch=" + channelString + " n=" + noteMap[ surface ] + " v=" + str(actualVolume) + "\n"
 								# expand diddle/tremolo

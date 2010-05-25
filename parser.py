@@ -476,17 +476,7 @@ class Parser:
 
 		# for tenors, merge flam notes together
 
-		# expand unison surface into simultaneous based on number of basses?
-
 		# if timeSignature per measure is not specified, deduce into x/4
-
-		# obey basses setting
-		# FIX ME
-		basses = 'abcdef'
-		#if 'basses' in settings:
-		#	bassUnison = basses[0: int(score['basses']) ]
-		#else: # default to 5 basses for unisons
-		bassUnison = basses[0:5]
 
 		# annotate with durations and many other things
 		dynamic = False 
@@ -519,12 +509,9 @@ class Parser:
 						i += 1
 				# end tenor-specific
 
-				# convert bass unisons to simultaneous notes
+				# fix bass flams
 				if instrument == 'bass':
 					for note in beat:
-						if 'surface' in note and note['surface'] == 'u':
-							# how many basses should we expand to?
-							note['surface'] = bassUnison
 						if 'flam' in note:
 							note['flam'] = note['surface']
 				# end bass-specific
@@ -589,7 +576,7 @@ rules = [
 	("sticking", r"[rl]"),
 	("articulation", r"[,=!-]"),
 
-	("surface", r"[aAbBcCdDeEfFuUsStThHxX]"),
+	("surface", r"[aAbBcCdDeEuUsStThHxX]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
