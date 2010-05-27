@@ -1389,11 +1389,21 @@ class LilypondConvertor(Convertor):
 								if 'accent' in note:
 									#ret += ' \\accent'
 									ret += ' ^>'
+
 								if 'staccato' in note:
 									ret += ' \staccato'
 
 								if 'shot' in note:
 									ret += ' \\revert NoteHead #\'style'
+
+								if instrument == 'cymbal':
+									if 'cymbal' in note:
+										if note['cymbal'] == 'slide':
+											ret += '( '
+										if note['cymbal'] == 'crashchoke':
+											ret += ' ^^'
+									if 'stop' in note:
+										ret += ') \\slurDown '
 
 								ret += ' '
 
