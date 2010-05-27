@@ -142,7 +142,7 @@ class Parser:
 			# now annotate notes in ret with stickings we just got?
 			i = 0
 			for note in ret:
-				if not i in stickings:
+				if not i < len(stickings):
 					break
 				sticking = stickings[ i ]
 				if 'rest' in note:
