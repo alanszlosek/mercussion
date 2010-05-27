@@ -359,27 +359,29 @@ class VDLMidiConvertor(Convertor):
 							if 'rim' in note:
 								note['surface'] = note['surface'].upper()
 
-						if instrument == 'cymbal' and 'surface' in note and 'cymbal' in note:
+						if instrument == 'cymbal' and 'surface' in note and not 'rest' in note:
 							if note['surface'] == 'u':
 								note['surface'] = 'a'
-								if note['cymbal'] == 'slide':
-									note['surface'] = 'b'
-								if note['cymbal'] == 'hihat':
-									note['surface'] = 'd'
-								if note['cymbal'] == 'tap':
-									note['surface'] = 'e'
-								if note['cymbal'] == 'crashchoke':
-									note['surface'] = 'c'
+								if 'cymbal' in note:
+									if note['cymbal'] == 'slide':
+										note['surface'] = 'b'
+									if note['cymbal'] == 'hihat':
+										note['surface'] = 'd'
+									if note['cymbal'] == 'tap':
+										note['surface'] = 'e'
+									if note['cymbal'] == 'crashchoke':
+										note['surface'] = 'c'
 							else:
 								note['surface'] = 's'
-								if note['cymbal'] == 'slide':
-									note['surface'] = 't'
-								if note['cymbal'] == 'hihat':
-									note['surface'] = 'v'
-								if note['cymbal'] == 'tap':
-									note['surface'] = 'w'
-								if note['cymbal'] == 'crashchoke':
-									note['surface'] = 'u'
+								if 'cymbal' in note:
+									if note['cymbal'] == 'slide':
+										note['surface'] = 't'
+									if note['cymbal'] == 'hihat':
+										note['surface'] = 'v'
+									if note['cymbal'] == 'tap':
+										note['surface'] = 'w'
+									if note['cymbal'] == 'crashchoke':
+										note['surface'] = 'u'
 
 						# but doing this gets clipping
 						#if instrument == 'bass' and 'surface' in note and note['surface'] == 'u':
@@ -477,9 +479,9 @@ class VDLMidiConvertor(Convertor):
 				"f": [], # mute for a crash?
 
 				# solo 
-				"s": [34,34], # crash
-				"t": [40,40], # sizzle
-				"u": [29,29], # crash choke
+				"s": [30,30], # crash
+				"t": [40,40], # slide-choke
+				"u": [33,33], # crash choke
 				"v": [46,46], # hihat
 				"w": [42,42] # edge tap
 			}
@@ -1224,7 +1226,7 @@ class LilypondConvertor(Convertor):
 		a = self.fixDurations(score)
 
 		ret = '\\version "2.8.7"\n'
-		ret += '#(set-default-paper-size "a4" \'portrait)'
+		ret += '#(set-default-paper-size "a4" \'portrait)\n'
 
 		# this doesn't do enough. lilypond feels like a waste of effort.
 		#ret += '\t\\paper {\n'
@@ -1237,8 +1239,10 @@ class LilypondConvertor(Convertor):
 		ret += '\\header {\n'
 		if 'title' in a:
 			ret += '\ttitle="' + a['title'] + '"\n'
+		if 'subtitle' in a:
+			ret += '\tsubtitle="' + a['subtitle'] + '"\n'
 		if 'author' in a:
-			ret += '\tauthor="' + a['author'] + '"\n'
+			ret += '\tcomposer="' + a['author'] + '"\n'
 			ret += '\tcopyright = \\markup {"Copyright" \\char ##x00A9 "' + a['author'] + '"}\n'
 		ret += '}\n\n'
 

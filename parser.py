@@ -209,7 +209,7 @@ class Parser:
 				ret['fours'] = True
 
 			# cymbal modifiers
-			if self.value == '~':
+			if self.value == '~' or self.value == '!':
 				ret['cymbal'] = 'slide'
 			if self.value == '`':
 				ret['cymbal'] = 'hihat'
@@ -340,17 +340,12 @@ class Parser:
 					for note in beat:
 						if not 'surface' in note:
 							continue
-						if note['surface'] == 'a': # crash
-							pass
 						if note['surface'] == 'b': # slide-choke
 							pass
 						if note['surface'] == 'c': # crash-choke
 							pass
-						if note['surface'] == 'd': # hihat
+						if 'cymbal' in note and note['cymbal'] == 'hihat': # hihat
 							note['staccato'] = True
-							pass
-						if note['surface'] == 'e': # edge tap
-							pass
 					
 				# end cymbal-specific
 					
