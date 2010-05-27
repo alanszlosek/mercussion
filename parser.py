@@ -141,10 +141,13 @@ class Parser:
 			stickings = self.sticking()
 			# now annotate notes in ret with stickings we just got?
 			i = 0
-			for sticking in stickings:
-				note = ret[ i ]
-				if sticking != '.':
-					note['hand'] = stickings[i]
+			for note in ret:
+				if not i in stickings:
+					break
+				sticking = stickings[ i ]
+				if 'rest' in note:
+					continue
+				note['hand'] = sticking
 				i += 1
 			
 		return ret
@@ -204,6 +207,16 @@ class Parser:
 				ret['diddle'] = True
 			if self.value == '=':
 				ret['fours'] = True
+
+			# cymbal modifiers
+			if self.value == '~':
+				ret['cymbal'] = 'slide'
+			if self.value == '`':
+				ret['cymbal'] = 'hihat'
+			if self.value == '^':
+				ret['cymbal'] = 'tap'
+			if self.value == '@':
+				ret['cymbal'] = 'crashchoke'
 			if self.value == '!':
 				ret['stop'] = True
 			self.accept('articulation')
@@ -233,6 +246,7 @@ class Parser:
 				ret['accent'] = True
 			if self.value.lower() == 'x':
 				ret['shot'] = True
+
 			ret['surface'] = self.value.lower()
 			self.accept('surface')
 			return ret
@@ -240,206 +254,11 @@ class Parser:
 		else: # should only get here if there's an error
 			return self.NotFound
 
-
-# cymbal methods
-
-	def cymbalMusic(self):
-		if self.debug:
-			sys.stderr.write('In cymbalMusic()\n')
-		# returns an array of measures
-		ret = []
-
-		while 1:
-			a = self.cymbalMeasure()
-
-			if a != self.NotFound:
-				ret.append(a)
-			else:
-				break
-
-			while self.token == 'space':
-				self.accept('space')
-			if self.token != 'pipe':
-				break
-			else:
-				if not self.accept('pipe'):
-					break
-			while self.token == 'space':
-				self.accept('space')
-		if len(ret) == 0:
-			return self.NotFound
-		return ret
-
-	def cymbalMeasure(self):
-		if self.debug:
-			sys.stderr.write('In measure()\n')
-
-		# returns a measure structure
-		ret = {
-			#'timesignature': '4/4',
-			'beats': []
-		}
-		while 1:
-			a = self.cymbalBeat()
-			if len(a) == 0:
-				break
-			ret['beats'].append(a)
-			while self.token == 'space':
-				self.accept('space')
-
-		if len( ret['beats'] ) == 0:
-			return self.NotFound
-		return ret
-
-	def cymbalBeat(self):
-		if self.debug:
-			sys.stderr.write('In cymbalBeat()\n')
-		# returns an array of notes
-		ret = []
-		# need to add simultaneous and other tokens
-		while ['articulation','dynamic','rest','bassTenorSurface','simultaneousA', 'tenorModifier','cymbalModifier'].count(self.token):
-			a = self.cymbalNote()
-			if a == self.NotFound:
-				if self.debug:
-					sys.stderr.write('NotFound from cymbalNote()\n')
-				break
-			else:
-				ret.append(a)
-
-		return ret
-
-	def cymbalNote(self):
-		if self.debug:
-			sys.stderr.write('In cymbalNote()\n')
-		# returns a note structure
-		# this is just a sample of the structure, elements will not be present unless they have a value
-		ret = {
-			#'accent': False,
-			#'diddle': False,
-			#'dynamic': False,
-			#'dynamicChange': '>' or '<'
-			#'dynamicChangeEnd': False,
-			#'flam': False,
-			#'flamRest': False,
-			#'fours': False,
-			#'highAccent': False,
-			#'notes': [],
-			#'rest': False,
-			#'sticking': False,
-			#'surface': False
-		}
-		
-		a = self.cymbalModifiers()
-		ret.update(a)
-		a = self.cymbalSurface()
-
-		if a == self.NotFound: # if no surface, probably an error
-			return self.NotFound
-			#self.die('Should have caught this error in surfaceNote()')
-		else:
-			ret.update(a)
-		return ret
-
-	def cymbalModifiers(self):
-		if self.debug:
-			sys.stderr.write('In cymbalModifiers()\n')
-		ret = {}
-		
-		while 1:
-			a = self.cymbalModifier()
-			if a == self.NotFound: # no modifiers, or no more modifiers
-				break
-			ret.update(a)
-		return ret
-
-	def cymbalModifier(self):
-		if self.debug:
-			sys.stderr.write('In cymbalModifier()\n')
-		ret = {}
-		if self.token == 'tenorModifier' or self.token == 'cymbalModifier':
-			if self.value == '^': # taps
-				ret['tap'] = True
-				self.accept('cymbalModifier')
-			if self.value == '!': # choke
-				ret['choke'] = True
-				self.accept('cymbalModifier')
-			if self.value == '~': # slide
-				ret['slide'] = True
-				self.accept('cymbalModifier')
-			if self.value == '*': # hihat
-				ret['hihat'] = True
-				self.accept('tenorModifier')
-			return ret
-
-		elif self.token == 'dynamic':
-			return self.dynamicModifier()
-
-		else:
-			if self.debug:
-				sys.stderr.write('No modifier or no more\n')
-			return self.NotFound
-
-	def cymbalSurface(self):
-		if self.debug:
-			sys.stderr.write('In cymbalSurface()\n')
-		ret = {}
-
-		# bass tenor
-		if self.token == 'rest': #rest
-			ret['rest'] = True
-			self.accept('rest')
-			return ret
-
-		elif self.token == 'simultaneousA':
-			self.accept('simultaneousA')
-			ret = self.cymbalSurfaces()
-			self.accept('simultaneousB')
-			return ret
-
-		else:
-			return self.cymbalSurface2()
-
-	def cymbalSurface2(self):
-		if self.debug:
-			sys.stderr.write('In cymbalSurface2()\n')
-		ret = {}
-		if re.search(self.value, "ABCDEFU"):
-			ret['accent'] = True
-			ret['surface'] = self.value.lower()
-			self.accept('bassTenorSurface')
-			return ret
-
-		elif re.search(self.value, "abcdefu"):
-			ret['surface'] = self.value
-			self.accept('bassTenorSurface')
-			return ret
-			
-		else: # should only get here if there's an error
-			return self.NotFound
-
-	def cymbalSurfaces(self):
-		if self.debug:
-			sys.stderr.write('In cymbalSurfaces()\n')
-		ret = {}
-		while self.token == 'bassTenorSurface':
-			a = self.cymbalSurface2()
-			if 'surface' in ret:
-				surface = ret['surface']
-			else:
-				surface = ''
-			if 'surface' in a:
-				surface = surface + a['surface']
-			ret.update(a)
-			ret['surface'] = surface
-		return ret
-
-
 	def sticking(self):
 		ret = []
 		while self.token == 'sticking' or self.token == 'rest':
 			a = self.token
 			if a == 'rest':
-				ret.append(self.value)
 				self.accept('rest')
 			if a == 'sticking':
 				ret.append(self.value)
@@ -516,6 +335,26 @@ class Parser:
 							note['flam'] = note['surface']
 				# end bass-specific
 
+				# cymbal-specific
+				if instrument == 'cymbal':
+					for note in beat:
+						if not 'surface' in note:
+							continue
+						if note['surface'] == 'a': # crash
+							pass
+						if note['surface'] == 'b': # slide-choke
+							pass
+						if note['surface'] == 'c': # crash-choke
+							pass
+						if note['surface'] == 'd': # hihat
+							note['staccato'] = True
+							pass
+						if note['surface'] == 'e': # edge tap
+							pass
+					
+				# end cymbal-specific
+					
+
 				# this is really geared toward midi output
 				# annotate with durations
 				duration = len(beat)
@@ -574,7 +413,8 @@ rules = [
 	#modifiers
 	("dynamic", r"[<>OPMFG]{1}"),
 	("sticking", r"[rl]"),
-	("articulation", r"[,=!-]"),
+	("articulation", r"[,=~!`@^-]"),
+# really do need cymbal-only articulations
 
 	("surface", r"[aAbBcCdDeEuUsStThHxX]"),
 	("rest", r"[.]"),

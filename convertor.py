@@ -268,11 +268,11 @@ class VDLMidiConvertor(Convertor):
 
 	# tried 7% gain with each level, not significant enough
 	volumeMap = {
-		"O": .50,
-		"P": .60, # pianissimo
+		"O": .30,
+		"P": .45, # pianissimo
 		# should be mezzo-piano in here, i think
-		"M": .70, # mezzo-forte
-		"F": .80, # forte
+		"M": .60, # mezzo-forte
+		"F": .75, # forte
 		"G": .90 # ff
 	}
 
@@ -359,6 +359,32 @@ class VDLMidiConvertor(Convertor):
 							if 'rim' in note:
 								note['surface'] = note['surface'].upper()
 
+						if instrument == 'cymbal' and 'surface' in note and 'cymbal' in note:
+							if note['surface'] == 'u':
+								note['surface'] = 'a'
+								if note['cymbal'] == 'slide':
+									note['surface'] = 'b'
+								if note['cymbal'] == 'hihat':
+									note['surface'] = 'd'
+								if note['cymbal'] == 'tap':
+									note['surface'] = 'e'
+								if note['cymbal'] == 'crashchoke':
+									note['surface'] = 'c'
+							else:
+								note['surface'] = 's'
+								if note['cymbal'] == 'slide':
+									note['surface'] = 't'
+								if note['cymbal'] == 'hihat':
+									note['surface'] = 'v'
+								if note['cymbal'] == 'tap':
+									note['surface'] = 'w'
+								if note['cymbal'] == 'crashchoke':
+									note['surface'] = 'u'
+
+						# but doing this gets clipping
+						#if instrument == 'bass' and 'surface' in note and note['surface'] == 'u':
+						#	note['surface'] = 'abcde'
+
 						if hand == 0:
 							hand = 1
 						else:
@@ -381,11 +407,12 @@ class VDLMidiConvertor(Convertor):
 			"tenor": "1"
 		}
 		# integers so we can add and subtract
+		# are tenors too soft on Bananaton?
 		instrumentVolumeMap = {
 			"bass": 127,
-			"cymbal": 120,
-			"snare": 120,
-			"tenor": 120
+			"cymbal": 127,
+			"snare": 127,
+			"tenor": 127
 		}
 		instrumentPanMap = {
 			"bass": "64", # 30
@@ -428,7 +455,7 @@ class VDLMidiConvertor(Convertor):
 				"c": [60,59], # c4 b3
 				"d": [58,57], # a#3 a3
 				"e": [56,55], # g#3 g3
-				"u": [52,51] # e3 d#3
+				"u": [52,52] # used two 52s to avoid buzzing on left. e3 d#3
 
 				# rims
 				#"A": ["e3","d#3"], # e2 d#2
@@ -450,11 +477,11 @@ class VDLMidiConvertor(Convertor):
 				"f": [], # mute for a crash?
 
 				# solo 
-				"s": [34], #crash
-				"t": [38], # sizzle
-				"u": [36],
-				"v": [46], #hihat
-				"w": [42] # edge tap
+				"s": [34,34], # crash
+				"t": [40,40], # sizzle
+				"u": [29,29], # crash choke
+				"v": [46,46], # hihat
+				"w": [42,42] # edge tap
 			}
 		}
 
@@ -1041,10 +1068,13 @@ class MusicXMLConvertor(Convertor):
 
 								out += t3 + '<stem>up</stem>' + nl
 
-								if 'shot' in note:
+								if instrument == 'cymbal':
 									out += t3 + '<notehead>x</notehead>' + nl
-								elif surface in self.noteHeads:
-									out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
+								else:
+									if 'shot' in note:
+										out += t3 + '<notehead>x</notehead>' + nl
+									elif surface in self.noteHeads:
+										out += t3 + '<notehead>' + self.noteHeads[ surface ] + '</notehead>' + nl
 
 								if note['duration'] > 1:
 									out += t3 + '<beam>' # number="' + self.beamMap[ note['duration'] ] + '">'
@@ -1067,8 +1097,13 @@ class MusicXMLConvertor(Convertor):
 									pass
 								if 'diddle' in note:
 									out += t4 + '<ornaments><tremolo type="single">1</tremolo></ornaments>' + nl
-								if 'accent' in note :
-									out += t4 + '<articulations><accent placement="above"></accent></articulations>' + nl
+								if 'accent' in note or 'staccato' in note:
+									out += t4 + '<articulations>'
+									if 'accent' in note:
+										out += '<accent placement="above"></accent>'
+									if 'staccato' in note:
+										out += '<staccato placement="below"></staccato>'
+									out += '</articulations>' + nl
 								if 'dynamic' in note:
 									out += t4 + '<dynamics placement="below"><' + self.dynamicMap[ note['dynamic'] ] + ' /></dynamics>' + nl
 								if duration == 3 or duration == 6 or 'accent' in note or 'diddle' in note or 'dynamic' in note:
@@ -1192,12 +1227,12 @@ class LilypondConvertor(Convertor):
 		ret += '#(set-default-paper-size "a4" \'portrait)'
 
 		# this doesn't do enough. lilypond feels like a waste of effort.
-		ret += '\t\\paper {\n'
-		ret += '\t\tbetween-system-padding = #0.1\n'
-		ret += '\t\tbetween-system-space = #0.1\n'
-		ret += '\t\tragged-last-bottom = ##f\n'
-		ret += '\t\tragged-bottom = ##f\n'
-		ret += '\t}\n'
+		#ret += '\t\\paper {\n'
+		#ret += '\t\tbetween-system-padding = #0.1\n'
+		#ret += '\t\tbetween-system-space = #0.1\n'
+		#ret += '\t\tragged-last-bottom = ##f\n'
+		#ret += '\t\tragged-bottom = ##f\n'
+		#ret += '\t}\n'
 
 		ret += '\\header {\n'
 		if 'title' in a:
@@ -1320,15 +1355,14 @@ class LilypondConvertor(Convertor):
 							if len(note['surface']) > 1:
 								ret += ' <<'
 							for surface in note['surface']:
-								if 'shot' in note:
-									ret += '\\override NoteHead #\'style = #\'cross '
-									ret += mapping[ surface ] + str(note['duration'])
-
-								# elif 'choke' in note:
-								# elif 'slide' in note:
-								# elif 'tap' in note:
+								if instrument == 'cymbal':
+									if not 'stop' in note:
+										ret += '\\once \\override NoteHead #\'style = #\'cross '
 								else:
-									ret += mapping[ surface ] + str(note['duration'])
+									if 'shot' in note:
+										ret += '\\override NoteHead #\'style = #\'cross '
+
+								ret += mapping[ surface ] + str(note['duration'])
 
 								# diddle?
 								# check flag for whether to expand tremolos
@@ -1355,6 +1389,8 @@ class LilypondConvertor(Convertor):
 								if 'accent' in note:
 									#ret += ' \\accent'
 									ret += ' ^>'
+								if 'staccato' in note:
+									ret += ' \staccato'
 
 								if 'shot' in note:
 									ret += ' \\revert NoteHead #\'style'
