@@ -124,6 +124,7 @@ class Parser:
 			sys.stderr.write('In beat()\n')
 		# returns an array of notes
 		ret = []
+		simultaneous = False
 		while ['articulation','dynamic','rest','simultaneous','sticking','surface'].count(self.token):
 			# digest notes
 			a = self.note()
@@ -131,8 +132,18 @@ class Parser:
 				if self.debug:
 					sys.stderr.write('NotFound from note()\n')
 				break
+
+			if simultaneous:
+				# tack surface onto last parsed note
+				ret[ len(ret)-1 ]['surface'] += a['surface']
 			else:
 				ret.append(a)
+
+			if self.token == 'simultaneous':
+				simultaneous = True
+				self.accept('simultaneous')
+			else:
+				simultaneous = False
 
 
 		# are we at the sticking separator?

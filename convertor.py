@@ -411,7 +411,7 @@ class VDLMidiConvertor(Convertor):
 		# integers so we can add and subtract
 		# are tenors too soft on Bananaton?
 		instrumentVolumeMap = {
-			"bass": 127,
+			"bass": 120,
 			"cymbal": 127,
 			"snare": 127,
 			"tenor": 127
@@ -1402,7 +1402,7 @@ class LilypondConvertor(Convertor):
 
 								if instrument == 'cymbal':
 									if 'cymbal' in note:
-										if note['cymbal'] == 'slide':
+										if note['cymbal'] == 'slide' and not 'stop' in note:
 											ret += '( '
 										if note['cymbal'] == 'crashchoke':
 											ret += ' ^^'
