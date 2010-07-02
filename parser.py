@@ -236,6 +236,9 @@ class Parser:
 		elif self.token == 'dynamic':
 			return self.dynamicModifier()
 
+		elif self.token == 'sticking':
+			return self.stickingModifier()
+
 		else:
 			if self.debug:
 				sys.stderr.write('No modifier or no more\n')
@@ -279,22 +282,35 @@ class Parser:
 	def dynamicModifier(self):
 		ret = {}
 		if self.token == 'dynamic':
-			if self.value == 'O':
-				ret['dynamic'] = 'O'
-			if self.value == 'P':
+			if self.value == 'O': # o not 0
 				ret['dynamic'] = 'P'
-			if self.value == 'M':
-				ret['dynamic'] = 'M'
-			if self.value == 'F':
+			if self.value == '1':
+				ret['dynamic'] = 'P'
+			if self.value == 'P':
+				ret['dynamic'] = 'MP'
+			if self.value == '2':
+				ret['dynamic'] = 'MP'
+			if self.value == 'M' or self.value == '3':
+				ret['dynamic'] = 'MF'
+			if self.value == 'F' or self.value == '4':
 				ret['dynamic'] = 'F'
-			if self.value == 'G':
-				ret['dynamic'] = 'G'
+			if self.value == 'G' or self.value == '5':
+				ret['dynamic'] = 'FF'
 			if self.value == '<':
 				ret['dynamicChange'] = '<'
 			if self.value == '>':
 				ret['dynamicChange'] = '>'
 			self.accept('dynamic')
 			return ret
+		# error otherwise
+
+	def stickingModifier(self):
+		ret = {}
+		if self.token == 'sticking':
+			ret['sticking'] = self.value
+			self.accept('sticking')
+			return ret
+		# error otherwise
 
 	def condense(self, instrument, music, settings={}):
 		# should we also annotate notes with durations in this step, or another step prior to self.toLilypond()?
@@ -417,12 +433,12 @@ rules = [
 	("comment", r"#.*"),
 
 	#modifiers
-	("dynamic", r"[<>OPMFG]{1}"),
+	("dynamic", r"[<>OPMFG12345]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=~!`@^-]"),
 # really do need cymbal-only articulations
 
-	("surface", r"[aAbBcCdDeEuUsStThHxX]"),
+	("surface", r"[aAbBcCdDeEuUsStThHxX12]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),

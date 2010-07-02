@@ -8,11 +8,11 @@ class MidiConvertor(Convertor):
 	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
 	volumeMap = {
-		"O": .20,
-		"P": .40, # pianissimo
-		"M": .60, # mezzo-forte
+		"P": .20,
+		"MP": .40, # pianissimo
+		"MF": .60, # mezzo-forte
 		"F": .80, # forte
-		"G": 1.00 # ff
+		"FF": 1.00 # ff
 	}
 
 	# will need to hard-code volume levels for crescendos and decrescendos
@@ -33,8 +33,8 @@ class MidiConvertor(Convertor):
 			music = score[ instrument ]
 
 			start = {}
-			startDynamic = 'M'
-			dynamic = 'M'
+			startDynamic = 'MF'
+			dynamic = 'MF'
 			beatCount = 0
 			for measure in music:
 				for beat in measure['beats']:
@@ -267,13 +267,14 @@ class VDLMidiConvertor(Convertor):
 	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
 	# tried 7% gain with each level, not significant enough
+	# but .15 leaves soft part inaudible, with bass parts boomy on mp3 sample playing through speakers. ugh.
 	volumeMap = {
-		"O": .30,
-		"P": .45, # pianissimo
+		"P": .50, # pianissimo
+		"MP": .60, # pianissimo
 		# should be mezzo-piano in here, i think
-		"M": .60, # mezzo-forte
-		"F": .75, # forte
-		"G": .90 # ff
+		"MF": .70, # mezzo-forte
+		"F": .80, # forte
+		"FF": .90 # ff
 	}
 
 	# will need to hard-code volume levels for crescendos and decrescendos
@@ -294,8 +295,8 @@ class VDLMidiConvertor(Convertor):
 			music = score[ instrument ]
 
 			start = {}
-			startDynamic = 'M'
-			dynamic = 'M'
+			startDynamic = 'MF'
+			dynamic = 'MF'
 			beatCount = 0
 			for measure in music:
 				for beat in measure['beats']:
@@ -387,6 +388,7 @@ class VDLMidiConvertor(Convertor):
 						#if instrument == 'bass' and 'surface' in note and note['surface'] == 'u':
 						#	note['surface'] = 'abcde'
 
+						# we still alternate on rests, right? we should.
 						if hand == 0:
 							hand = 1
 						else:
@@ -411,7 +413,7 @@ class VDLMidiConvertor(Convertor):
 		# integers so we can add and subtract
 		# are tenors too soft on Bananaton?
 		instrumentVolumeMap = {
-			"bass": 120,
+			"bass": 127,
 			"cymbal": 127,
 			"snare": 127,
 			"tenor": 127
@@ -427,8 +429,15 @@ class VDLMidiConvertor(Convertor):
 			"snare": {
 				# actually, snares seem to be up another octave
 				"h": [68,66], # g#4 f#4
-				"x": [67,65] # g4 f4
+				"x": [67,65], # g4 f4
 				# rim
+				"a": [63,61]
+
+				#"a": [], # head, center
+				#"b": [], # head, midway 
+				#"c": [], # head, edge 
+				#"d": [], # rim
+				#"e": [10,10] # stick click e1
 				#"": ["d#6","c#5"] # d#5 c#4
 			},
 
@@ -438,8 +447,8 @@ class VDLMidiConvertor(Convertor):
 				"b": [58,57], # a#3 a3
 				"c": [56,55], # g#3 g3
 				"d": [54,53], # f#3 f3
-				"e": [64,63], # e4 d#4
-				"f": [62,61], # d4 c#4
+				"1": [64,63], # e4 d#4
+				"2": [62,61], # d4 c#4
 
 				# shots
 				# rims should be upper, like basses, but oh well
@@ -647,11 +656,11 @@ class MidiConvertor2(Convertor):
 	# does noteOff affect the output at all? test again, because i might need it for cymbals
 
 	volumeMap = {
-		"O": .20,
-		"P": .40, # pianissimo
-		"M": .60, # mezzo-forte
+		"P": .20,
+		"MP": .40, # pianissimo
+		"MF": .60, # mezzo-forte
 		"F": .80, # forte
-		"G": 1.00 # ff
+		"FF": 1.00 # ff
 	}
 
 	# will need to hard-code volume levels for crescendos and decrescendos
@@ -672,8 +681,8 @@ class MidiConvertor2(Convertor):
 			music = score[ instrument ]
 
 			start = {}
-			startDynamic = 'M'
-			dynamic = 'M'
+			startDynamic = 'MF'
+			dynamic = 'MF'
 			beatCount = 0
 			for measure in music:
 				for beat in measure['beats']:
@@ -910,11 +919,11 @@ class MusicXMLConvertor(Convertor):
 		8: '3',
 	}
 	dynamicMap = {
-		'O': 'pp',
 		'P': 'p',
-		'M': 'mf',
+		'MP': 'mp',
+		'MF': 'mf',
 		'F': 'f',
-		'G': 'ff'
+		'FF': 'ff'
 	}
 	noteHeads = {
 		'x': 'x'
@@ -937,7 +946,9 @@ class MusicXMLConvertor(Convertor):
 			"b": "C5",
 			"c": "A4",
 			"d": "F4",
-			"e": "D4"
+			"e": "D4",
+
+			"u": "C4"
 		}
 
 		out = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + nl + '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + nl
@@ -1264,11 +1275,11 @@ class LilypondConvertor(Convertor):
 			'u': 'b\'', # unison b'
 	
 			# dynamics
-			'O': '\\pp',
 			'P': '\\p',
-			'M': '\\mf',
+			'MP': '\\mp',
+			'MF': '\\mf',
 			'F': '\\f',
-			'G': '\\ff',
+			'FF': '\\ff',
 	
 			'<': '\\<',
 			'>': '\\>',
@@ -1278,7 +1289,7 @@ class LilypondConvertor(Convertor):
 		# set this flag when we encounter one of them
 		# unset it when we encounter the first dynamic that's not one
 		crescendoDecrescendo = False
-		dynamic = 'M'
+		dynamic = 'MF'
 
 		for instrument in score['instruments']:
 			if not instrument in score:
