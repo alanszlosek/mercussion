@@ -307,7 +307,7 @@ class Parser:
 	def stickingModifier(self):
 		ret = {}
 		if self.token == 'sticking':
-			ret['sticking'] = self.value
+			ret['hand'] = self.value
 			self.accept('sticking')
 			return ret
 		# error otherwise
@@ -433,12 +433,12 @@ rules = [
 	("comment", r"#.*"),
 
 	#modifiers
-	("dynamic", r"[<>OPMFG12345]{1}"),
+	("dynamic", r"[<>12345]{1}"),
 	("sticking", r"[rl]"),
 	("articulation", r"[,=~!`@^-]"),
 # really do need cymbal-only articulations
 
-	("surface", r"[aAbBcCdDeEuUsStThHxX12]"),
+	("surface", r"[aAbBcCdDeEfFuUsStThHxX]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),

@@ -338,10 +338,10 @@ class VDLMidiConvertor(Convertor):
 			if not instrument in score:
 				continue
 			music = score[ instrument ]
+			hand = 0
 
 			for measure in music:
 				for beat in measure['beats']:
-					hand = 0
 					for note in beat:
 						if 'hand' in note:
 							if note['hand'] == 'l':
@@ -429,16 +429,14 @@ class VDLMidiConvertor(Convertor):
 			"snare": {
 				# actually, snares seem to be up another octave
 				"h": [68,66], # g#4 f#4
-				"x": [67,65], # g4 f4
-				# rim
-				"a": [63,61]
+				"x": [67,65], # shot g4 f4
 
-				#"a": [], # head, center
+				"a": [68,66], # head, center
 				#"b": [], # head, midway 
 				#"c": [], # head, edge 
-				#"d": [], # rim
-				#"e": [10,10] # stick click e1
-				#"": ["d#6","c#5"] # d#5 c#4
+				"d": [63,61], # rim
+				"e": [28,28], # stick click
+				"f": [71,70] # back stick
 			},
 
 			"tenor": {
@@ -447,8 +445,8 @@ class VDLMidiConvertor(Convertor):
 				"b": [58,57], # a#3 a3
 				"c": [56,55], # g#3 g3
 				"d": [54,53], # f#3 f3
-				"1": [64,63], # e4 d#4
-				"2": [62,61], # d4 c#4
+				"e": [64,63], # e4 d#4
+				"f": [62,61], # d4 c#4
 
 				# shots
 				# rims should be upper, like basses, but oh well
