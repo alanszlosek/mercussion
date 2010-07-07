@@ -218,6 +218,8 @@ class Parser:
 				ret['diddle'] = True
 			if self.value == '=':
 				ret['fours'] = True
+			if self.value == '*':
+				ret['rim'] = True
 
 			# cymbal modifiers
 			if self.value == '~' or self.value == '!':
@@ -435,10 +437,10 @@ rules = [
 	#modifiers
 	("dynamic", r"[<>12345]{1}"),
 	("sticking", r"[rl]"),
-	("articulation", r"[,=~!`@^-]"),
+	("articulation", r"[,=~!`@^*-]"),
 # really do need cymbal-only articulations
 
-	("surface", r"[aAbBcCdDeEfFuUsStThHxX]"),
+	("surface", r"[aAbBcCdDeEfFuUsStThHxXzZ]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),

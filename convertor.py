@@ -128,6 +128,7 @@ class MidiConvertor(Convertor):
 			"c": "a5",
 			"d": "f5",
 			"e": "d5",
+			"f": "e6",
 
 			# cymbal
 			"!": "e6",
@@ -430,6 +431,7 @@ class VDLMidiConvertor(Convertor):
 				# actually, snares seem to be up another octave
 				"h": [68,66], # g#4 f#4
 				"x": [67,65], # shot g4 f4
+				"z": [73,73], # crushes
 
 				"a": [68,66], # head, center
 				#"b": [], # head, midway 
@@ -467,12 +469,12 @@ class VDLMidiConvertor(Convertor):
 				"u": [52,52] # used two 52s to avoid buzzing on left. e3 d#3
 
 				# rims
-				#"A": ["e3","d#3"], # e2 d#2
-				#"B": ["d3","c#3"], # d2 c#2
-				#"C": ["c3","b2"], # c2 b1
-				#"D": ["a#2","a2"], # a#1 a1
-				#"E": ["g#2","g2"], # g#1 g1
-				#"U": ["d4","c#4"]# d3 c#3
+				"A": ["40","39"], # e2 d#2
+				"B": ["38","37"], # d2 c#2
+				"C": ["36","35"], # c2 b1
+				"D": ["34","33"], # a#1 a1
+				"E": ["32","31"], # g#1 g1
+				"U": ["50","49"]# d3 c#3
 			},
 
 			"cymbal": {
