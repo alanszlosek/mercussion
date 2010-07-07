@@ -120,6 +120,7 @@ class MidiConvertor(Convertor):
 		noteMap = {
 			# snare
 			"h": "c6",
+			"z": "c6",
 			"x": "d6",
 
 			# bass and tenor
@@ -197,7 +198,7 @@ class MidiConvertor(Convertor):
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
-								tempVolume = int(instrumentVolume * self.volumeMap['P'])
+								tempVolume = int(instrumentVolume * self.volumeMap['MP'])
 								out += str(c1 - 13) + " On ch=" + channelString + " n=" + noteMap[ note['flam'] ] + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ] + " v=0\n"
 							
@@ -466,7 +467,7 @@ class VDLMidiConvertor(Convertor):
 				"c": [60,59], # c4 b3
 				"d": [58,57], # a#3 a3
 				"e": [56,55], # g#3 g3
-				"u": [52,52] # used two 52s to avoid buzzing on left. e3 d#3
+				"u": [52,52], # used two 52s to avoid buzzing on left. e3 d#3
 
 				# rims
 				"A": ["40","39"], # e2 d#2
