@@ -1,6 +1,16 @@
-REDESIGN CONSIDERATIONS
+- cross noteheads on snare rim clicks
 
-- allow simultaneous notes to have their own modifiers, or share them
+- grr, a better way to do simultaneous is needed, especially with RH on rim, LH on snare type setup
+
+- some dynamic changes in grahvy aren't coming across
+
+
+REDESIGN CONSIDERATIONS
+- pass note structure into methods by reference?
+	- removes need for ret.update(a)
+	- then we can go back to returning True or False (stop looping, looking for more modifiers/notes)
+
+- allow simultaneous notes to share modifiers
 
 - parse time signatures
 	- pain in the ass with the current regex setup. need to be able to easily define regexes, but also define a collection of regexes, for more concise code in the parser
@@ -19,9 +29,6 @@ REDESIGN CONSIDERATIONS
 	- h[hhh]h (recurse and subdivide somehow?)
 	- h..hhhh..
 
-- plan cymbal notation
-	- need "stop previous event" modifiers
-
 
 OTHER
 
@@ -29,31 +36,17 @@ OTHER
 	- midicomp maps c4 and other notes to midi instruments that seem to be 2 octaves too low. check svg in reference
 	- what does the track instrument volume do again?
 
-- temporary music files to play a note from each instrument so i can rip the samples
-
-- adjust instrument volumes by testing pp and ff
-	- can't hear tenors over basses at pp versus p
-
 - musicxml
 	- instrument names
-	- flams
 	- unisons
 	- dynamic changes
+		- think this is done
 
 - push dynamics to lilypond even on rest notes
-
-- when compiling for midi output
-	- add tap-off measure
 
 - maybe switch from time signature at the end, to requiring it to be specified in the first measure
 	- but then we have to declare it multiple times
 	- ok, so just annotate the first measure's timeSignature if it doesn't have one and there's one in the score
-
-- shots on tenors
-	- see if sample is present in soundfont
-	- have them come through in MIDI
-
-- ability to specify the measure to use for the tapoff (what if we don't want it to be snare?)
 
 - annotate measures with timeSignature if one wasn't parsed
 	- use beats in measure over 4 as default
@@ -76,7 +69,21 @@ OTHER
 
 	- what if i just had some way of playing every time i saved? 
 
-Done:
+IN PROGRESS
+
+- what about r/l as modifiers. you don't have to use them all the time. they just tell the alternator what to start with or when to override alternating
+	- not a bad idea
+	- snare should probably move from h to abcde and so-on: center, midway, edge, rim
+	- b and r for "right backstick"
+	- 1 p; 2 mp; 3 mf; 4 f; 5 ff
+
+- thought of using numbers for dynamic levels, freeing up f for a spock surface, but then there's the idea of using numbers to denote surfaces so i can specify r/l more directly
+
+
+DONE:
+
+- push unison to 5 notes into non-VDL midi convertor
+	- vdl should get 1 unison note
 
 - push sticking to lilypond output
 - musicxml: title, author, copyright
@@ -117,6 +124,7 @@ Done:
 - parse simultaneous notes
 - flags for which instruments to output (instead of all by default)
 	- like this: --instrument snare,tenor
+- use YAML for most of the parsing ... the only thing i want to worry about is parsing the music notation
 
 
 Bah
