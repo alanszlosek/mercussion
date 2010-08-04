@@ -362,6 +362,12 @@ class VDLMidiConvertor(Convertor):
 							if 'rim' in note:
 								note['surface'] = note['surface'].upper()
 
+						if instrument == 'bass':
+							if 'shot' in note: # unison bass rims
+								note['surface'] = 'U'
+								del(note['shot'])
+						
+
 						if instrument == 'cymbal' and 'surface' in note and not 'rest' in note:
 							if note['surface'] == 'u':
 								note['surface'] = 'a'
@@ -470,12 +476,12 @@ class VDLMidiConvertor(Convertor):
 				"u": [52,52], # used two 52s to avoid buzzing on left. e3 d#3
 
 				# rims
-				"A": ["40","39"], # e2 d#2
-				"B": ["38","37"], # d2 c#2
-				"C": ["36","35"], # c2 b1
-				"D": ["34","33"], # a#1 a1
-				"E": ["32","31"], # g#1 g1
-				"U": ["50","49"]# d3 c#3
+				"A": [40,39], # e2 d#2
+				"B": [38,37], # d2 c#2
+				"C": [36,35], # c2 b1
+				"D": [34,33], # a#1 a1
+				"E": [32,31], # g#1 g1
+				"U": [50,49]# d3 c#3
 			},
 
 			"cymbal": {
@@ -1237,7 +1243,7 @@ class LilypondConvertor(Convertor):
 		#a = self.flams(parsed)
 		a = self.fixDurations(score)
 
-		ret = '\\version "2.8.7"\n'
+		ret = '\\version "2.12.3"\n'
 		ret += '#(set-default-paper-size "a4" \'portrait)\n'
 
 		# this doesn't do enough. lilypond feels like a waste of effort.
@@ -1274,6 +1280,7 @@ class LilypondConvertor(Convertor):
 	
 			'r': 'r', # rest
 			'u': 'b\'', # unison b'
+			'z': 'e\'\'',
 	
 			# dynamics
 			'P': '\\p',
@@ -1300,44 +1307,44 @@ class LilypondConvertor(Convertor):
 			if instrument == 'snare':
 				ret += '\t% Snare\n'
 				ret += '\t\\new Staff {\n'
+				ret += '\t\t\\numericTimeSignature\n'
+				if 'timesignature' in a:
+					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
 				ret += '\t\t\\set Staff.clefPosition = #0\n'
-				ret += '\t\t\\numericTimeSignature\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Snare "\n'
 
 				#self.beaming()
-				if 'timesignature' in a:
-					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'tenor':
 				ret += '\t% Tenor\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
-				ret += '\t\t\\set Staff.clefPosition = #0\n'
-				ret += '\t\t\\numericTimeSignature\n'
+				#ret += '\t\t\\numericTimeSignature\n'
+				#if 'timesignature' in a:
+				#	ret += '\t\t\\time ' + a['timesignature'] + '\n'
+				#ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				#ret += '\t\t\\set Staff.clefPosition = #0\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Tenor "\n'
-				if 'timesignature' in a:
-					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'bass':
 				ret += '\t% Bass\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
-				ret += '\t\t\\set Staff.clefPosition = #0\n'
-				ret += '\t\t\\numericTimeSignature\n'
+				#ret += '\t\t\\numericTimeSignature\n'
+				#if 'timesignature' in a:
+				#	ret += '\t\t\\time ' + a['timesignature'] + '\n'
+				#ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				#ret += '\t\t\\set Staff.clefPosition = #0\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Bass "\n'
-				if 'timesignature' in a:
-					ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			elif instrument == 'cymbal':
 				ret += '\t% Cymbals\n'
 				ret += '\t\\new Staff {\n'
-				ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
-				ret += '\t\t\\set Staff.clefPosition = #0\n'
-				ret += '\t\t\\numericTimeSignature\n'
+				#ret += '\t\t\\set Staff.clefGlyph = #"clefs.percussion"\n'
+				#ret += '\t\t\\set Staff.clefPosition = #0\n'
+				#ret += '\t\t\\numericTimeSignature\n'
 				ret += '\t\t\\set Staff.instrumentName = #"Cymbals "\n'
-				if 'timesignature' in a:
-					ret += '\t\t\\time ' + a['timesignature'] + '\n'
+				#if 'timesignature' in a:
+				#	ret += '\t\t\\time ' + a['timesignature'] + '\n'
 
 			ret += '\t\t\\stemUp\n'
 
@@ -1353,6 +1360,8 @@ class LilypondConvertor(Convertor):
 						if 'tupletStart' in note:
 							if note['tupletStart'] == 3:
 								ret += '\\times 2/3 { '
+							elif note['tupletStart'] == '5':
+								ret += '\\times 4/5 { '
 							else:
 								ret += '\\times 4/' + str(note['tupletStart']) + ' { '
 
@@ -1440,8 +1449,8 @@ class LilypondConvertor(Convertor):
 
 				ret += ' \n '
 				if iMeasure == 4:
-					if len(measure['beats']) > 1:
-						ret += ' \\break \n '
+					#if len(measure['beats']) > 1:
+					#	ret += ' \\break \n '
 					iMeasure = 1
 				else:
 					iMeasure += 1
