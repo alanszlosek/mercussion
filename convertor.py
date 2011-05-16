@@ -361,6 +361,8 @@ class VDLMidiConvertor(Convertor):
 						if instrument == 'tenor' or instrument == 'bass':
 							if 'rim' in note:
 								note['surface'] = note['surface'].upper()
+							if 'cymbal' in note and note['cymbal'] == 'slide':
+								note['surface'] = chr(21 + ord(note['surface']))
 
 						if instrument == 'bass':
 							if 'shot' in note: # unison bass rims
@@ -421,16 +423,16 @@ class VDLMidiConvertor(Convertor):
 		# integers so we can add and subtract
 		# are tenors too soft on Bananaton?
 		instrumentVolumeMap = {
-			"bass": 127,
+			"bass": 110, # accented bass unisons clip at Forte
 			"cymbal": 127,
 			"snare": 127,
 			"tenor": 127
 		}
 		instrumentPanMap = {
-			"bass": "64", # 30
+			"bass": "94", # 30
 			"cymbal": "64",
 			"snare": "64",
-			"tenor": "64" # 98
+			"tenor": "34" # 98
 		}
 		# these map to manual VirtualDrumline instruments
 		noteMap = {
@@ -459,12 +461,20 @@ class VDLMidiConvertor(Convertor):
 
 				# shots
 				# rims should be upper, like basses, but oh well
-				"A": ["c4","b3"], # c2 b1
-				"B": ["a#3","a3"], # a#1 a1
-				"C": ["g#3","g3"], # g#1 g1
-				"D": ["f#3","f3"], # f#1 f1
-				"E": ["e4","d#4"], # e2 d#2
-				"F": ["d4","c#4"] # d2 c#2
+				"A": [36,35], # c2 b1
+				"B": [34,33], # a#1 a1
+				"C": [32,31], # g#1 g1
+				"D": [30,29], # f#1 f1
+				"E": [40,39], # e2 d#2
+				"F": [38,37], # d2 c#2
+
+				#crushes
+				"u": [84,84], # c2 b1
+				"v": [82,82], # a#1 a1
+				"w": [80,80], # g#1 g1
+				"x": [78,78], # f#1 f1
+				"y": [88,88], # e2 d#2
+				"z": [86,86] # d2 c#2
 			},
 
 			"bass": {
@@ -525,7 +535,7 @@ class VDLMidiConvertor(Convertor):
 
 		# set counter a second into the future for blank space padding
 
-		flamPosition = -20 # calculate based on tempo
+		flamPosition = -25 # calculate based on tempo
 		accentIncrease = 20 # we go up 10% (12.7x2=25) each dynamic level
 		perBeat = 384
 		startingCounter = 30 #(scoreTempo / 60) * 30 # calculate how much time would yield a second
@@ -1236,6 +1246,13 @@ class LilypondConvertor(Convertor):
 
 						note['duration'] = duration
 
+						if instrument == 'tenor' and 'surface' in note and note['surface'] == 'e':
+							note['surface'] = 'E'
+						if instrument == 'bass' and 'surface' in note and note['surface'] == 'x':
+							note['surface'] = 'u'
+							note['shot'] = True
+					
+
 						# should i set shot flag here too?
 		return score
 
@@ -1276,10 +1293,12 @@ class LilypondConvertor(Convertor):
 			'c': 'a\'',
 			'd': 'f\'',
 			'e': 'd\'',
+			'E': 'g\'\'', # spocks
 			'f': 'b',
 	
 			'r': 'r', # rest
 			'u': 'b\'', # unison b'
+			'U': 'b\'', # unison rim
 			'z': 'e\'\'',
 	
 			# dynamics
