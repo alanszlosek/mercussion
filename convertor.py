@@ -1050,6 +1050,13 @@ class MusicXMLConvertor(Convertor):
 								else:
 									out += 'continue'
 								out += '</beam>' + nl
+							if (duration == 3 or duration == 6) and (iNote == 1 or iNote == note['duration']):
+								out += t4 + '<notations><tuplet type="'
+								if iNote == 1:
+									out += 'start'
+								elif iNote == note['duration']:
+									out += 'stop'
+								out += '" number="1" bracket="yes" show-number="actual" show-type="none" line-shape="straight" placement="above" /></notations>' + nl
 							out += t2 + '</note>' + nl
 						else:
 							iSurface = 1
@@ -1123,11 +1130,13 @@ class MusicXMLConvertor(Convertor):
 									out += t3 + '<notations>' + nl
 
 								# for tuplet bracket, need to know whether first or last note in tuplet
-								if duration == 3:
-									#out += t4 + '<tuplet />' + nl
-									pass
-								if duration == 6:
-									pass
+								if (duration == 3 or duration == 6) and (iNote == 1 or iNote == note['duration']):
+									out += t4 + '<tuplet type="'
+									if iNote == 1:
+										out += 'start'
+									elif iNote == note['duration']:
+										out += 'stop'
+									out += '" number="1" bracket="yes" show-number="actual" show-type="none" line-shape="straight" placement="above" />' + nl
 								if 'diddle' in note:
 									out += t4 + '<ornaments><tremolo type="single">1</tremolo></ornaments>' + nl
 								if 'accent' in note or 'staccato' in note:
