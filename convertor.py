@@ -1,3 +1,4 @@
+import sys
 from decimal import *
 
 class Convertor:
@@ -440,6 +441,7 @@ class VDLMidiConvertor(Convertor):
 				# actually, snares seem to be up another octave
 				"h": [68,66], # g#4 f#4
 				"x": [67,65], # shot g4 f4
+				"y": [75,75], # crushes
 				"z": [73,73], # crushes
 
 				"a": [68,66], # head, center
@@ -484,6 +486,7 @@ class VDLMidiConvertor(Convertor):
 				"d": [58,57], # a#3 a3
 				"e": [56,55], # g#3 g3
 				"u": [52,52], # used two 52s to avoid buzzing on left. e3 d#3
+				"x": [50,49],
 
 				# rims
 				"A": [40,39], # e2 d#2
@@ -965,7 +968,7 @@ class MusicXMLConvertor(Convertor):
 			"d": "F4",
 			"e": "D4",
 
-			"u": "C4"
+			"u": "B4"
 		}
 
 		out = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + nl + '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 2.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">' + nl

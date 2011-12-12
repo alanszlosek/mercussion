@@ -440,7 +440,7 @@ rules = [
 	("articulation", r"[,=~!`@^*-]"),
 # really do need cymbal-only articulations
 
-	("surface", r"[aAbBcCdDeEfFuUsStThHxXzZ]"),
+	("surface", r"[aAbBcCdDeEfFuUsStThHxXyYzZ]"),
 	("rest", r"[.]"),
 
 	("pipe", r"\|"),
