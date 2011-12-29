@@ -1002,6 +1002,7 @@ class MusicXMLConvertor(Convertor):
 			i += 1
 		out += '</part-list>' + nl
 
+		divisions = 24
 		i = 1
 		for instrument in score['instruments']:
 			if not instrument in score:
@@ -1019,7 +1020,7 @@ class MusicXMLConvertor(Convertor):
 				out += t + '<measure number="' + str(iMeasure) + '">' + nl
 				out += t2 + '<attributes>' + nl
 				# divisions per quarter note for 1 duration
-				out += t3 + '<divisions>12</divisions>' + nl
+				out += t3 + '<divisions>' + str(divisions) + '</divisions>' + nl
 				if iMeasure == 1:
 					out += t3 + '<key><fifths>0</fifths><mode>major</mode></key>' + nl
 				if prevTimeSignature <> measure['timesignature']:
@@ -1034,7 +1035,7 @@ class MusicXMLConvertor(Convertor):
 							duration = note['duration']
 							out += t2 + '<note>' + nl
 							out += t3 + '<rest />' + nl
-							out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+							out += t3 + '<duration>' + str(divisions / note['duration']) + '</duration>' + nl
 							out += t3 + '<type>' + str(self.durationMap[ note['duration'] ]) + '</type>' + nl
 							if duration == 3:
 								out += t3 + '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>' + nl
@@ -1077,7 +1078,7 @@ class MusicXMLConvertor(Convertor):
 								if 'flam' in note:
 									noteMapped = noteMap[ note['flam'] ]
 									out += t2 + '<note>' + nl
-									out += t3 + '<grace slash="no" />' + nl
+									out += t3 + '<grace slash="no" steal-time-previous="0" steal-time-following="0" />' + nl
 									out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
 									out += t3 + '<tie type="start" />' + nl
 									
@@ -1093,7 +1094,7 @@ class MusicXMLConvertor(Convertor):
 								noteMapped = noteMap[ surface ]
 								out += t3 + '<unpitched><display-step>' + noteMapped[0] + '</display-step><display-octave>' + noteMapped[1] + '</display-octave></unpitched>' + nl
 
-								out += t3 + '<duration>' + str(12 / note['duration']) + '</duration>' + nl
+								out += t3 + '<duration>' + str(divisions / note['duration']) + '</duration>' + nl
 								if 'flam' in note: # close tie
 									out += t3 + '<tie type="stop" />' + nl
 
