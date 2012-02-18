@@ -929,7 +929,11 @@ class MusicXMLConvertor(Convertor):
 		5: '16th',
 		6: '16th',
 		7: '16th',
-		8: '32nd'
+		8: '32nd',
+		9: '64th',
+		10: '64th',
+		11: '64th',
+		12: '64th'
 	}
 	beamMap = {
 		2: '1',
@@ -962,7 +966,9 @@ class MusicXMLConvertor(Convertor):
 			# snare
 			"h": "C5",
 			"x": "C5",
+			"y": "C5",
 			"z": "C5",
+			"f": "C5", #backstick
 
 			# bass and tenor
 			"a": "E5",
