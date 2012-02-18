@@ -590,9 +590,11 @@ class VDLMidiConvertor(Convertor):
 								# if surface is shot, flams should be on the drum head
 								# annotate notes with proper flam surface
 								#go back a bit, from current counter value
+								something = tempVolume
 								tempVolume = int(instrumentVolume * self.volumeMap['P'])
 								out += str(c1 - 13) + " On ch=" + channelString + " n=" + str( transpose + noteMap[ instrument ][ note['flam'] ][ hand2 ]) + " v=" + str(tempVolume) + "\n"
 								#out += str(c1 - 5) + " Off ch=" + channelString + " n=" + noteMap[ note['surface'] ][ hand ] + " v=0\n"
+								tempVolume = something
 							
 							# prepare volume
 							if 'volumePercentage' in note:
@@ -960,6 +962,7 @@ class MusicXMLConvertor(Convertor):
 			# snare
 			"h": "C5",
 			"x": "C5",
+			"z": "C5",
 
 			# bass and tenor
 			"a": "E5",
